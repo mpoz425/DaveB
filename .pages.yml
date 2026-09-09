@@ -1,0 +1,530 @@
+# Pages CMS configuration (https://pagescms.org).
+# This is what turns the JSON files in data/ into editing screens at app.pagescms.org.
+# Saving in the CMS commits to this repo, and Vercel redeploys the site from that commit.
+
+settings:
+  content:
+    merge: true
+  commit:
+    identity: user
+    templates:
+      create: "Add {filename} (via Pages CMS)"
+      update: "Update {filename} (via Pages CMS)"
+      delete: "Remove {filename} (via Pages CMS)"
+
+# Uploaded photos land in incoming/<series>/ and a GitHub Action resizes and
+# registers them automatically (see .github/workflows/photos.yml).
+media:
+  - name: incoming
+    label: New photos (drop zone)
+    input: incoming
+    output: /incoming
+    extensions: [jpg, jpeg, png]
+    rename: safe
+
+actions:
+  - name: redeploy
+    label: Redeploy site
+    workflow: redeploy.yml
+    confirm:
+      title: Redeploy the site?
+      message: Rebuilds the site with the latest newsletter posts and copyright year. Content edits already redeploy on their own; you only need this if something looks stale.
+      button: Redeploy
+
+content:
+  - name: status
+    label: Currently (status board)
+    type: file
+    path: data/status.json
+    format: json
+    list: true
+    fields:
+      - name: label
+        label: Label
+        type: string
+        required: true
+        description: e.g. Listening, Loaded, Eating
+      - name: value
+        label: What's happening
+        type: string
+        required: true
+
+  - name: reviews
+    label: Reviewed (five-star cards)
+    type: file
+    path: data/reviews.json
+    format: json
+    list: true
+    fields:
+      - name: thing
+        label: Thing being reviewed
+        type: string
+        required: true
+      - name: stars
+        label: Stars (1-5)
+        type: number
+        required: true
+        options:
+          min: 1
+          max: 5
+      - name: note
+        label: Review
+        type: text
+        required: true
+      - name: proper_noun
+        label: Keep capitalization in the verdict line
+        type: boolean
+        description: Turn on for names like "Anora" so the verdict reads "I give Anora five stars" instead of "I give anora".
+
+  - name: bucket_list
+    label: Venue bucket list
+    type: file
+    path: data/bucket_list.json
+    format: json
+    list: true
+    fields:
+      - name: venue
+        label: Venue
+        type: string
+        required: true
+      - name: place
+        label: City / state
+        type: string
+      - name: done
+        label: Been there
+        type: boolean
+      - name: note
+        label: Note
+        type: text
+
+  - name: film_stocks
+    label: Film log (what's in the bag)
+    type: file
+    path: data/film_stocks.json
+    format: json
+    list: true
+    fields:
+      - name: name
+        label: Stock
+        type: string
+        required: true
+        description: Use the same spelling when tagging photos with a stock.
+      - name: iso
+        label: ISO
+        type: number
+      - name: type
+        label: Type
+        type: select
+        options:
+          values: [Color negative, B&W, Slide]
+      - name: used_for
+        label: Used for
+        type: text
+
+  - name: homepage
+    label: Homepage photo picks
+    type: file
+    path: data/homepage.json
+    format: json
+    fields:
+      - name: filmstrip
+        label: Filmstrip frames
+        type: object
+        description: The scrolling strip near the top of the homepage. Frame numbers match the gallery (frame 1 is the first photo in that series).
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{series} · frame {frame}"
+        fields:
+          - name: series
+            label: Series
+            type: select
+            required: true
+            options:
+              values:
+                - { name: concerts, label: Concerts }
+                - { name: travel, label: Travel }
+                - { name: new-york-city, label: New York City }
+                - { name: worn-on-tour, label: Worn on Tour }
+                - { name: sports, label: Sports }
+          - name: frame
+            label: Frame number
+            type: number
+            required: true
+            options:
+              min: 1
+      - name: polaroids
+        label: Worn on Tour polaroid wall
+        type: object
+        description: Frame numbers from the Worn on Tour series, plus the Sharpie caption under each polaroid.
+        list:
+          collapsible:
+            collapsed: true
+            summary: "frame {frame} · {caption}"
+        fields:
+          - name: frame
+            label: Frame number
+            type: number
+            required: true
+            options:
+              min: 1
+          - name: caption
+            label: Caption
+            type: string
+
+  - name: photos
+    label: Photos
+    type: group
+    items:
+      - name: series
+        label: Series (the rolls)
+        type: file
+        path: data/series.json
+        format: json
+        list: true
+        fields:
+          - name: slug
+            label: URL slug
+            type: string
+            readonly: true
+            description: Fixed. It's the page address (concerts.html) and the folder name for photos.
+          - name: title
+            label: Title
+            type: string
+            required: true
+          - name: kicker
+            label: Kicker
+            type: string
+            description: e.g. "Film · Live music"
+          - name: medium
+            label: Medium
+            type: select
+            required: true
+            options:
+              values: [film, digital]
+          - name: blurb
+            label: Blurb
+            type: text
+          - name: cover
+            label: Cover frame number
+            type: number
+            options:
+              min: 1
+          - name: instagram
+            label: Instagram link (optional)
+            type: string
+
+      - name: photos_concerts
+        label: Concerts
+        type: file
+        path: data/photos/concerts.json
+        format: json
+        list: true
+        fields:
+          - { name: id, type: string, hidden: true }
+          - { name: w, type: number, hidden: true }
+          - { name: h, type: number, hidden: true }
+          - { name: thumb, type: string, hidden: true }
+          - { name: med, type: string, hidden: true }
+          - { name: full, type: string, hidden: true }
+          - name: place
+            label: Place / caption
+            type: string
+          - name: stock
+            label: Film stock
+            type: string
+            description: Match a name from the Film log, e.g. Kodak Portra 800. Leave empty if unknown.
+
+      - name: photos_travel
+        label: Travel
+        type: file
+        path: data/photos/travel.json
+        format: json
+        list: true
+        fields:
+          - { name: id, type: string, hidden: true }
+          - { name: w, type: number, hidden: true }
+          - { name: h, type: number, hidden: true }
+          - { name: thumb, type: string, hidden: true }
+          - { name: med, type: string, hidden: true }
+          - { name: full, type: string, hidden: true }
+          - name: place
+            label: Place / caption
+            type: string
+          - name: stock
+            label: Film stock
+            type: string
+            description: Match a name from the Film log, e.g. Kodak Portra 800. Leave empty if unknown.
+
+      - name: photos_nyc
+        label: New York City
+        type: file
+        path: data/photos/new-york-city.json
+        format: json
+        list: true
+        fields:
+          - { name: id, type: string, hidden: true }
+          - { name: w, type: number, hidden: true }
+          - { name: h, type: number, hidden: true }
+          - { name: thumb, type: string, hidden: true }
+          - { name: med, type: string, hidden: true }
+          - { name: full, type: string, hidden: true }
+          - name: place
+            label: Place / caption
+            type: string
+          - name: stock
+            label: Film stock
+            type: string
+            description: Match a name from the Film log, e.g. Kodak Portra 800. Leave empty if unknown.
+
+      - name: photos_worn
+        label: Worn on Tour
+        type: file
+        path: data/photos/worn-on-tour.json
+        format: json
+        list: true
+        fields:
+          - { name: id, type: string, hidden: true }
+          - { name: w, type: number, hidden: true }
+          - { name: h, type: number, hidden: true }
+          - { name: thumb, type: string, hidden: true }
+          - { name: med, type: string, hidden: true }
+          - { name: full, type: string, hidden: true }
+          - name: place
+            label: Place / caption
+            type: string
+          - name: stock
+            label: Film stock
+            type: string
+            description: Match a name from the Film log, e.g. Kodak Portra 800. Leave empty if unknown.
+
+      - name: photos_sports
+        label: Sports
+        type: file
+        path: data/photos/sports.json
+        format: json
+        list: true
+        fields:
+          - { name: id, type: string, hidden: true }
+          - { name: w, type: number, hidden: true }
+          - { name: h, type: number, hidden: true }
+          - { name: thumb, type: string, hidden: true }
+          - { name: med, type: string, hidden: true }
+          - { name: full, type: string, hidden: true }
+          - name: place
+            label: Place / caption
+            type: string
+          - name: stock
+            label: Film stock
+            type: string
+            description: Match a name from the Film log, e.g. Kodak Portra 800. Leave empty if unknown.
+
+  - name: newsletter_posts
+    label: Newsletter posts (backup list)
+    type: file
+    path: data/newsletter_posts.json
+    format: json
+    list: true
+    fields:
+      - name: n
+        label: Issue number
+        type: string
+        description: e.g. 068
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: sub
+        label: Subtitle
+        type: string
+      - name: date
+        label: Date
+        type: string
+        description: e.g. Jan 2026
+      - name: url
+        label: Link
+        type: string
+        required: true
+
+  - name: copy
+    label: Site copy & links
+    type: file
+    path: data/copy.json
+    format: json
+    fields:
+      - name: name
+        label: Name
+        type: string
+        required: true
+      - name: short_name
+        label: Short name
+        type: string
+      - name: location
+        label: Location
+        type: string
+      - name: tagline
+        label: Tagline
+        type: string
+      - name: page_title
+        label: Browser tab title (homepage)
+        type: string
+      - name: meta_description
+        label: Search / share description
+        type: text
+      - name: copyright_start
+        label: Copyright start year
+        type: number
+        description: The footer reads "© <start>–<current year>". The current year updates itself.
+      - name: footer_line
+        label: Footer line
+        type: string
+
+      - name: links
+        label: Links
+        type: object
+        fields:
+          - { name: instagram_worn, label: Instagram (Worn on Tour), type: string }
+          - { name: newsletter, label: Newsletter home, type: string }
+          - { name: newsletter_subscribe, label: Newsletter subscribe page, type: string }
+          - { name: old_portfolio, label: Old portfolio, type: string }
+          - name: email
+            label: Email (optional)
+            type: string
+            description: If filled in, an Email button appears in the contact section.
+          - name: form_endpoint
+            label: Contact form endpoint (optional)
+            type: string
+            description: e.g. a Formspree URL. Until set, the form shows a "not wired up yet" note.
+
+      - name: nav
+        label: Menu labels
+        type: object
+        fields:
+          - { name: photos, label: Photos, type: string }
+          - { name: worn, label: Worn on Tour, type: string }
+          - { name: reviewed, label: Reviewed, type: string }
+          - { name: newsletter, label: Newsletter, type: string }
+          - { name: bucket, label: Bucket list, type: string }
+          - { name: hi, label: Say hi, type: string }
+
+      - name: hero
+        label: Hero (top of homepage)
+        type: object
+        fields:
+          - name: words
+            label: Rotating phrases after "Brooklyn guy who…"
+            type: string
+            list: true
+          - name: intro
+            label: Intro paragraph
+            type: text
+          - name: note
+            label: Handwritten note
+            type: text
+          - name: scroll_label
+            label: Scroll link label
+            type: string
+
+      - name: status_section
+        label: Status board header
+        type: object
+        fields:
+          - { name: label, label: Label, type: string }
+          - { name: note, label: Handwritten note, type: string }
+
+      - name: photos_section
+        label: Photos section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - name: heading
+            label: Heading
+            type: text
+            description: Press Enter where you want the line to break.
+          - { name: lede, label: Intro paragraph, type: text }
+          - { name: card_cta, label: Card link text, type: string }
+
+      - name: worn_on_tour
+        label: Worn on Tour section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - { name: title, label: Title, type: string }
+          - { name: handle, label: Instagram handle, type: string }
+          - { name: note, label: Handwritten note, type: string }
+          - { name: quote, label: Pull quote, type: text }
+          - { name: body, label: Body, type: text }
+          - { name: cta, label: Instagram button, type: string }
+          - { name: secondary_cta, label: Portraits button, type: string }
+
+      - name: reviews_section
+        label: Reviewed section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - name: heading
+            label: Heading
+            type: text
+            description: Press Enter where you want the line to break.
+          - { name: intro, label: Intro paragraph, type: text }
+          - { name: source_label, label: Source button text, type: string }
+          - { name: source_url, label: Source link, type: string }
+
+      - name: newsletter
+        label: Newsletter section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - { name: title, label: Newsletter name, type: string }
+          - { name: subtitle, label: Subtitle, type: string }
+          - name: origin
+            label: Origin story
+            type: text
+            description: Anything in "straight quotes" gets typographic quotes on the site.
+          - name: feed_url
+            label: RSS feed URL
+            type: string
+            description: Recent posts are pulled from here on every build. Clear it to use the backup list instead.
+          - name: max_posts
+            label: How many posts to show
+            type: number
+            options:
+              min: 1
+              max: 20
+          - { name: subscribe_label, label: Subscribe button, type: string }
+          - { name: archive_label, label: Archive button, type: string }
+          - { name: footnote, label: Footnote under the posts, type: string }
+
+      - name: bucket_section
+        label: Bucket list section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - name: heading
+            label: Heading
+            type: text
+            description: Press Enter where you want the line to break.
+          - { name: intro, label: Intro paragraph, type: text }
+
+      - name: film_log
+        label: Film log section
+        type: object
+        fields:
+          - { name: kicker, label: Kicker, type: string }
+          - { name: heading, label: Heading, type: string }
+          - { name: format, label: Format, type: string }
+          - { name: lab, label: Lab (full), type: string }
+          - { name: lab_short, label: Lab (short, used on gallery pages), type: string }
+          - { name: digital_line, label: Gallery line for digital series, type: string }
+
+      - name: contact
+        label: Contact section
+        type: object
+        fields:
+          - { name: heading, label: Heading, type: string }
+          - { name: body, label: Body, type: text }
+          - { name: burrito_line, label: Handwritten note, type: string }
+          - { name: message_placeholder, label: Message box placeholder, type: string }
+          - { name: form_connected_note, label: Note when the form is connected, type: string }
+          - { name: form_missing_note, label: Note when the form is not connected, type: string }
+          - { name: form_missing_alert, label: Pop-up when the form is not connected, type: string }
