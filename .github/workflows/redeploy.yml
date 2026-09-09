@@ -1,0 +1,34 @@
+# Asks Vercel to rebuild the site without any content change, so the build
+# picks up new newsletter posts from the RSS feed (and the new year on Jan 1).
+# Also runs behind the "Redeploy site" button in Pages CMS.
+#
+# One-time setup: in Vercel, Project -> Settings -> Git -> Deploy Hooks, create a
+# hook for the main branch, then add its URL as a repository secret named
+# VERCEL_DEPLOY_HOOK_URL (GitHub -> Settings -> Secrets and variables -> Actions).
+name: Redeploy site
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"   # every Monday, 13:00 UTC
+    - cron: "30 5 1 1 *"   # January 1st
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: Pages CMS payload (filled in automatically when triggered from the CMS)
+        required: false
+        type: string
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Vercel deploy hook
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::Missing the VERCEL_DEPLOY_HOOK_URL secret. Create a Deploy Hook in Vercel (Project -> Settings -> Git) and add its URL as a repository secret."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Deploy requested. The site updates in about a minute."

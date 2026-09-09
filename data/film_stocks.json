@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Kodak Portra 800",
+    "iso": 800,
+    "type": "Color negative",
+    "used_for": "Concerts. Holds the stage color without turning everything magenta."
+  },
+  {
+    "name": "Kodak T-MAX 3200",
+    "iso": 3200,
+    "type": "B&W",
+    "used_for": "Dark rooms. Grain the size of gravel, and that's the point."
+  },
+  {
+    "name": "Kodak Ultra Max 400",
+    "iso": 400,
+    "type": "Color negative",
+    "used_for": "New York. Cheap, warm, forgiving."
+  },
+  {
+    "name": "Arista EDU Ultra 400",
+    "iso": 400,
+    "type": "B&W",
+    "used_for": "Travel. The budget roll you keep in the bag just in case."
+  }
+]

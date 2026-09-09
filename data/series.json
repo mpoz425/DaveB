@@ -1,0 +1,43 @@
+[
+  {
+    "slug": "concerts",
+    "title": "Concerts",
+    "kicker": "Film · Live music",
+    "medium": "film",
+    "blurb": "Small rooms, big lights. Stage color pushed through Portra 800, and T-MAX 3200 when the room gets too dark to care about grain. Plus a band that set up by the lake in Central Park one afternoon.",
+    "cover": 10
+  },
+  {
+    "slug": "travel",
+    "title": "Travel",
+    "kicker": "Film · On the road",
+    "medium": "film",
+    "blurb": "Out West mostly: Garden of the Gods, Red Rocks, the Tetons in October, a dog by every river. Then a detour through London and Ghent.",
+    "cover": 7
+  },
+  {
+    "slug": "new-york-city",
+    "title": "New York City",
+    "kicker": "Film · Home turf",
+    "medium": "film",
+    "blurb": "Citi Field, Coney Island, the Manhattan Bridge at golden hour, the elevated tracks in Queens. Ultra Max 400 because the city already has enough contrast.",
+    "cover": 22
+  },
+  {
+    "slug": "worn-on-tour",
+    "title": "Worn on Tour",
+    "kicker": "Film · Portraits",
+    "medium": "film",
+    "blurb": "Walking up to strangers around New York City who are wearing great band merch and asking to take their picture. Awkward every time. Worth it every time.",
+    "cover": 2,
+    "instagram": "https://www.instagram.com/worn.on.tour/"
+  },
+  {
+    "slug": "sports",
+    "title": "Sports",
+    "kicker": "Digital · Fans",
+    "medium": "digital",
+    "blurb": "Knicks fans in the street during the playoff run, and Argentina supporters turning a stadium parking lot into a party. Shot digital, because you cannot ask a crowd to hold still for film.",
+    "cover": 8
+  }
+]

@@ -3,16 +3,16 @@
   <div class="wrap">
     <div class="hero__edge mono" aria-hidden="true">
       <span>Kodak Portra 800 &nbsp;&#9656;&nbsp; 135-36</span>
-      <span>David Burton &nbsp;&#9656;&nbsp; Home base</span>
+      <span>{{name}} &nbsp;&#9656;&nbsp; Home base</span>
       <span>{{hero_frames}}</span>
     </div>
 
     <div class="hero__titlewrap">
       <h1 class="hero__title">
-        <span class="l1">David</span>
-        <span class="l2">Burton</span>
+        <span class="l1">{{name_l1}}</span>
+        <span class="l2">{{name_l2}}</span>
       </h1>
-      <span class="hero__note hand" aria-hidden="true">still a work<br>in progress &#8600;</span>
+      <span class="hero__note hand" aria-hidden="true">{{hero_note}}</span>
     </div>
 
     <div class="hero__row">
@@ -26,7 +26,7 @@
           <span><b>{{total_frames}}</b> &nbsp;frames here</span>
           <span><b>{{location}}</b></span>
         </div>
-        <a class="hero__scroll mono" href="#photos">Scroll for the rolls <i></i></a>
+        <a class="hero__scroll mono" href="#photos">{{hero_scroll}} <i></i></a>
       </div>
     </div>
   </div>
@@ -47,8 +47,8 @@
   <div class="wrap reveal">
     <div class="status__head">
       <span class="dot" aria-hidden="true"></span>
-      <span class="mono">Currently</span>
-      <span class="hand">yet another venture</span>
+      <span class="mono">{{status_label}}</span>
+      <span class="hand">{{status_note}}</span>
     </div>
     <dl class="status__grid">
       {{status_items}}
@@ -61,9 +61,9 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div>
-        <div class="kicker mono">The rolls</div>
-        <h2>Photos, by the<br>roll they came off</h2>
-        <p class="lede">Four film series and one digital one. Concerts are the reason the camera exists. Everything else is what happened between shows.</p>
+        <div class="kicker mono">{{photos_kicker}}</div>
+        <h2>{{photos_heading}}</h2>
+        <p class="lede">{{photos_lede}}</p>
       </div>
       <div class="aside mono">{{series_aside}}</div>
     </div>
@@ -77,8 +77,8 @@
 <section class="section worn" id="worn">
   <div class="wrap worn__grid">
     <div class="worn__text reveal">
-      <div class="kicker mono">Portrait project &nbsp;·&nbsp; {{worn_handle}}</div>
-      <h2>{{worn_title}}<span class="hand">band tees, on film, on strangers</span></h2>
+      <div class="kicker mono">{{worn_kicker}} &nbsp;·&nbsp; {{worn_handle}}</div>
+      <h2>{{worn_title}}<span class="hand">{{worn_note}}</span></h2>
       <blockquote>{{worn_quote}}</blockquote>
       <p>{{worn_body}}</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -86,7 +86,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
           {{worn_cta}}
         </a>
-        <a class="btn" href="worn-on-tour.html">See the portraits &rarr;</a>
+        <a class="btn" href="worn-on-tour.html">{{worn_secondary_cta}} &rarr;</a>
       </div>
     </div>
     <div class="worn__wall reveal">
@@ -100,8 +100,8 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div>
-        <div class="kicker mono">Reviewed</div>
-        <h2>Things I love,<br>on a five-star scale</h2>
+        <div class="kicker mono">{{reviews_kicker}}</div>
+        <h2>{{reviews_heading}}</h2>
         <p class="lede">{{reviews_intro}}</p>
       </div>
       <div class="aside mono">Scale: &#9733; to &#9733;&#9733;&#9733;&#9733;&#9733;</div>
@@ -109,7 +109,7 @@
     <div class="reviews reveal">
       {{review_cards}}
     </div>
-    <p style="margin:26px 0 0"><a class="btn" href="{{review_source}}" target="_blank" rel="noopener">Read the full year in review &rarr;</a></p>
+    <p style="margin:26px 0 0"><a class="btn" href="{{review_source}}" target="_blank" rel="noopener">{{review_source_label}} &rarr;</a></p>
   </div>
 </section>
 
@@ -117,20 +117,20 @@
 <section class="section newsletter" id="newsletter">
   <div class="wrap newsletter__grid">
     <div class="masthead reveal">
-      <div class="kicker mono">The newsletter</div>
-      <h2>If You Get <em>Confused</em></h2>
+      <div class="kicker mono">{{nl_kicker}}</div>
+      <h2>{{nl_heading}}</h2>
       <p class="sub">{{nl_subtitle}}</p>
       <p class="origin">{{nl_origin}}</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn btn--solid" href="{{newsletter_subscribe}}" target="_blank" rel="noopener">Subscribe, it's free</a>
-        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">Browse the archive</a>
+        <a class="btn btn--solid" href="{{newsletter_subscribe}}" target="_blank" rel="noopener">{{nl_subscribe_label}}</a>
+        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">{{nl_archive_label}}</a>
       </div>
     </div>
     <div class="reveal">
       <ol class="posts">
         {{post_items}}
       </ol>
-      <p class="mono" style="color:var(--ink-3);margin-top:18px">Issue numbers in order of how much I overthought them.</p>
+      <p class="mono" style="color:var(--ink-3);margin-top:18px">{{nl_footnote}}</p>
     </div>
   </div>
 </section>
@@ -140,8 +140,8 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div>
-        <div class="kicker mono">Venue bucket list</div>
-        <h2>Rooms worth<br>traveling for</h2>
+        <div class="kicker mono">{{bucket_kicker}}</div>
+        <h2>{{bucket_heading}}</h2>
         <p class="lede">{{bucket_intro}}</p>
       </div>
       <div class="aside mono">{{bucket_tally}}</div>
@@ -157,8 +157,8 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div>
-        <div class="kicker mono">Film log</div>
-        <h2>What's in the bag</h2>
+        <div class="kicker mono">{{film_kicker}}</div>
+        <h2>{{film_heading}}</h2>
       </div>
       <div class="aside mono">Format: <b style="color:var(--ink-2);font-weight:400">{{film_format}}</b></div>
     </div>
@@ -187,8 +187,8 @@
       <p>{{contact_body}}</p>
       <span class="hand">{{contact_burrito}}</span>
       <div class="social">
-        <a class="btn" href="{{instagram}}" target="_blank" rel="noopener">Instagram &nbsp;·&nbsp; @worn.on.tour</a>
-        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">Substack &nbsp;·&nbsp; If You Get Confused</a>
+        <a class="btn" href="{{instagram}}" target="_blank" rel="noopener">Instagram &nbsp;·&nbsp; {{worn_handle}}</a>
+        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">Substack &nbsp;·&nbsp; {{nl_title}}</a>
         {{email_button}}
       </div>
     </div>
@@ -197,7 +197,7 @@
         <label><span class="mono">Name</span><input type="text" name="name" required autocomplete="name"></label>
         <label><span class="mono">Email</span><input type="email" name="email" required autocomplete="email"></label>
       </div>
-      <label><span class="mono">Message</span><textarea name="message" required placeholder="Burrito spot, band, show, or a print you want."></textarea></label>
+      <label><span class="mono">Message</span><textarea name="message" required placeholder="{{contact_placeholder}}"></textarea></label>
       <button class="btn btn--solid" type="submit">Send it</button>
       <p class="form__note mono">{{form_note}}</p>
     </form>

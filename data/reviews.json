@@ -1,0 +1,50 @@
+[
+  {
+    "thing": "Going to concerts",
+    "stars": 5,
+    "note": "Goose six times, Parcels, Luke Bryan, a bluegrass band at Sunny's in Red Hook, and rooms as small as Pete's Candy Store. The full concert experience.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Burritos",
+    "stars": 5,
+    "note": "Officially my favorite food. Rating every new spot across four boroughs. Scrolling Reddit and Google Maps for the next one is one of my most relaxing activities.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Shooting film",
+    "stars": 5,
+    "note": "Thirty-six chances per roll, and you don't find out for two weeks. Somehow that's the appeal.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Cheap beer",
+    "stars": 4,
+    "note": "Reformed IPA snob with 370+ Untappd check-ins. Turns out the point was always sharing a round with people.",
+    "proper_noun": false
+  },
+  {
+    "thing": "New running shoes",
+    "stars": 5,
+    "note": "Like a car fresh off a tune-up. Gotta look good to feel good.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Feeling uncomfortable",
+    "stars": 3,
+    "note": "Concerts alone, new jobs, asking strangers for a portrait. It never really goes away. You just stop letting it decide.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Imposter syndrome",
+    "stars": 2,
+    "note": "If the main thing I don't like about my job is that I feel like I don't deserve it, I'm probably in the right room.",
+    "proper_noun": false
+  },
+  {
+    "thing": "Anora",
+    "stars": 5,
+    "note": "Best movie I watched last year. They absolutely nailed the ending.",
+    "proper_noun": true
+  }
+]

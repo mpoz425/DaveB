@@ -1,0 +1,51 @@
+# Turns anything dropped into incoming/<series>/ into web-sized photos in
+# assets/photos/ and registers them in data/photos/<series>.json. Runs whenever
+# a commit touches incoming/ (for example an upload from Pages CMS). The commit
+# it pushes back triggers a normal Vercel deploy.
+name: Process new photos
+
+on:
+  push:
+    branches: [main]
+    paths: ["incoming/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: process-photos
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pillow
+
+      - name: Resize and register photos
+        run: python3 scripts/add_photos.py --incoming
+
+      - name: Make sure the site still builds
+        run: python3 build.py --no-fetch
+
+      - name: Commit the results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing new in incoming/."
+            exit 0
+          fi
+          git commit -m "Add new photos from incoming/"
+          git pull --rebase origin main
+          git push origin main

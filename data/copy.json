@@ -1,0 +1,100 @@
+{
+  "name": "David Burton",
+  "short_name": "Dave",
+  "location": "Brooklyn, NY",
+  "tagline": "Brooklyn guy who likes to pretend he's a photographer.",
+  "page_title": "David Burton — film photography, live music, Brooklyn",
+  "meta_description": "Home base for David Burton: 35mm concert, travel and New York photography, the Worn on Tour portrait project, the If You Get Confused newsletter, and five-star reviews of burritos.",
+  "copyright_start": 2020,
+  "footer_line": "Shot on 35mm in and around New York City. Scanned by Nice Film Club.",
+  "links": {
+    "instagram_worn": "https://www.instagram.com/worn.on.tour/",
+    "newsletter": "https://ifyougetconfused.substack.com",
+    "newsletter_subscribe": "https://ifyougetconfused.substack.com/subscribe",
+    "old_portfolio": "https://davidburton.myportfolio.com",
+    "email": "",
+    "form_endpoint": ""
+  },
+  "nav": {
+    "photos": "Photos",
+    "worn": "Worn on Tour",
+    "reviewed": "Reviewed",
+    "newsletter": "Newsletter",
+    "bucket": "Bucket list",
+    "hi": "Say hi"
+  },
+  "hero": {
+    "words": [
+      "shoots film",
+      "goes to shows",
+      "rates burritos",
+      "runs far",
+      "writes a newsletter",
+      "walks up to strangers in band tees",
+      "listens to the music play"
+    ],
+    "intro": "I picked up a film camera at my parents' place during the pandemic and have slowly used it more and more. I've always wanted to get really good at taking pictures. That's still a work in progress. In the meantime this is where the pictures live, along with everything else I can't stop talking about.",
+    "note": "still a work\nin progress ↘",
+    "scroll_label": "Scroll for the rolls"
+  },
+  "status_section": {
+    "label": "Currently",
+    "note": "yet another venture"
+  },
+  "photos_section": {
+    "kicker": "The rolls",
+    "heading": "Photos, by the\nroll they came off",
+    "lede": "Four film series and one digital one. Concerts are the reason the camera exists. Everything else is what happened between shows.",
+    "card_cta": "Open the roll"
+  },
+  "worn_on_tour": {
+    "kicker": "Portrait project",
+    "title": "Worn on Tour",
+    "handle": "@worn.on.tour",
+    "note": "band tees, on film, on strangers",
+    "quote": "It can be a tad uncomfortable to walk up to random people and ask to take a picture of them. So far it's been worth the awkwardness.",
+    "body": "A portrait project that combines the two hobbies: music and photography. Portraits, on film, of people around New York City wearing cool band merchandise. Neil Young tank tops, Smiths tees, Dead shirts that have clearly been to a lot of shows.",
+    "cta": "Follow along on Instagram",
+    "secondary_cta": "See the portraits"
+  },
+  "reviews_section": {
+    "kicker": "Reviewed",
+    "heading": "Things I love,\non a five-star scale",
+    "intro": "Borrowed from John Green's The Anthropocene Reviewed, and from a year-end newsletter where I rated the year on a five-star scale. Not self-help. Just a bit of fun.",
+    "source_label": "Read the full year in review",
+    "source_url": "https://ifyougetconfused.substack.com/p/if-you-get-confused-067-2025-reviewed"
+  },
+  "newsletter": {
+    "kicker": "The newsletter",
+    "title": "If You Get Confused",
+    "subtitle": "A newsletter meant to be listened to.",
+    "origin": "Named for the Grateful Dead lyric: \"If you get confused, listen to the music play.\" It's a method that has always worked for me.",
+    "feed_url": "https://ifyougetconfused.substack.com/feed",
+    "max_posts": 7,
+    "subscribe_label": "Subscribe, it's free",
+    "archive_label": "Browse the archive",
+    "footnote": "Issue numbers in order of how much I overthought them."
+  },
+  "bucket_section": {
+    "kicker": "Venue bucket list",
+    "heading": "Rooms worth\ntraveling for",
+    "intro": "Venues worth traveling for. Underrated places, something funky about the room, music I actually like, and logistics that won't ruin it for an anxious person."
+  },
+  "film_log": {
+    "kicker": "Film log",
+    "heading": "What's in the bag",
+    "format": "35mm (135)",
+    "lab": "Nice Film Club, Brooklyn",
+    "lab_short": "Nice Film Club",
+    "digital_line": "No lab, no waiting, less fun"
+  },
+  "contact": {
+    "heading": "Say hi",
+    "body": "Want a print, want to be in Worn on Tour, want to argue about the Dead's best song, or have a burrito recommendation? Any of those work.",
+    "burrito_line": "Burrito recommendations get priority.",
+    "form_connected_note": "Goes straight to my inbox. I read everything, I reply to most.",
+    "form_missing_note": "Form not connected yet. Instagram DM or a newsletter reply is fastest.",
+    "form_missing_alert": "The form isn’t wired up yet. DM @worn.on.tour on Instagram or reply to any newsletter.",
+    "message_placeholder": "Burrito spot, band, show, or a print you want."
+  }
+}

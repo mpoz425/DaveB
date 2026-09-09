@@ -1,0 +1,94 @@
+{
+  "filmstrip": [
+    {
+      "series": "concerts",
+      "frame": 10
+    },
+    {
+      "series": "travel",
+      "frame": 7
+    },
+    {
+      "series": "new-york-city",
+      "frame": 22
+    },
+    {
+      "series": "worn-on-tour",
+      "frame": 2
+    },
+    {
+      "series": "concerts",
+      "frame": 14
+    },
+    {
+      "series": "travel",
+      "frame": 18
+    },
+    {
+      "series": "new-york-city",
+      "frame": 7
+    },
+    {
+      "series": "sports",
+      "frame": 8
+    },
+    {
+      "series": "concerts",
+      "frame": 45
+    },
+    {
+      "series": "travel",
+      "frame": 12
+    },
+    {
+      "series": "new-york-city",
+      "frame": 23
+    },
+    {
+      "series": "worn-on-tour",
+      "frame": 11
+    },
+    {
+      "series": "concerts",
+      "frame": 22
+    },
+    {
+      "series": "travel",
+      "frame": 16
+    },
+    {
+      "series": "new-york-city",
+      "frame": 11
+    },
+    {
+      "series": "concerts",
+      "frame": 1
+    }
+  ],
+  "polaroids": [
+    {
+      "frame": 2,
+      "caption": "Neil Young"
+    },
+    {
+      "frame": 11,
+      "caption": "The Smiths"
+    },
+    {
+      "frame": 4,
+      "caption": "Support Live Music"
+    },
+    {
+      "frame": 7,
+      "caption": "no. 07"
+    },
+    {
+      "frame": 5,
+      "caption": "no. 05"
+    },
+    {
+      "frame": 12,
+      "caption": "no. 12"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "venue": "Red Rocks Amphitheatre",
+    "place": "Morrison, CO",
+    "done": true,
+    "note": "There are Red Rocks frames in the Travel roll, so we're counting it."
+  },
+  {
+    "venue": "The Gorge Amphitheatre",
+    "place": "Quincy, WA",
+    "done": false,
+    "note": "Labor Dave Weekend. As a fellow Dave with a Labor Day birthday, this is destiny."
+  },
+  {
+    "venue": "Codfish Hollow Barnstormers",
+    "place": "Maquoketa, IA",
+    "done": false,
+    "note": "A 600-cap barn in rural Iowa. What other reason would I have to go to Iowa?"
+  },
+  {
+    "venue": "Thekla",
+    "place": "Bristol, UK",
+    "done": false,
+    "note": "A 1950s German cargo ship you see a show inside of."
+  },
+  {
+    "venue": "Paradiso",
+    "place": "Amsterdam, NL",
+    "done": false,
+    "note": "An 1880 church. The Stones played it in '95."
+  },
+  {
+    "venue": "Johnny Brenda's",
+    "place": "Philadelphia, PA",
+    "done": false,
+    "note": "Tiny Fishtown dive, shows upstairs. If I'm going to Philly, I'm going here."
+  },
+  {
+    "venue": "SPAC",
+    "place": "Saratoga Springs, NY",
+    "done": false,
+    "note": "Was in town. It was Christian-rock weekend. Missed Phish by three weeks."
+  },
+  {
+    "venue": "Sphere",
+    "place": "Las Vegas, NV",
+    "done": false,
+    "note": "A planetarium for hippies."
+  }
+]
