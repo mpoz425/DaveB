@@ -1,0 +1,104 @@
+{
+  "name": "David Burton",
+  "short_name": "Dave",
+  "tagline": "Brooklyn guy who likes to pretend he's a photographer.",
+  "location": "Brooklyn, NY",
+  "url": "https://davidburton.myportfolio.com",
+  "meta_description": "Home base for David Burton: 35mm concert, travel and New York photography, the Worn on Tour portrait project, the If You Get Confused newsletter, and five-star reviews of burritos.",
+
+  "hero_words": [
+    "shoots film",
+    "goes to shows",
+    "rates burritos",
+    "runs far",
+    "writes a newsletter",
+    "walks up to strangers in band tees",
+    "listens to the music play"
+  ],
+
+  "hero_intro": "I picked up a film camera at my parents' place during the pandemic and have slowly used it more and more. I've always wanted to get really good at taking pictures. That's still a work in progress. In the meantime this is where the pictures live, along with everything else I can't stop talking about.",
+
+  "status": [
+    { "label": "Listening", "value": "Goose, Grateful Dead (Cornell '77, obviously)" },
+    { "label": "Loaded", "value": "Kodak Portra 800, 36 exp." },
+    { "label": "Eating", "value": "Hunting NYC's best burrito. Rey de Reyes is the front-runner." },
+    { "label": "Running", "value": "750+ miles last year. 1:26 half. Still in shock." },
+    { "label": "Reading", "value": "12 books a year. Fun ones only." },
+    { "label": "Writing", "value": "If You Get Confused, every week-ish" }
+  ],
+
+  "links": {
+    "instagram_worn": "https://www.instagram.com/worn.on.tour/",
+    "newsletter": "https://ifyougetconfused.substack.com",
+    "newsletter_subscribe": "https://ifyougetconfused.substack.com/subscribe",
+    "old_portfolio": "https://davidburton.myportfolio.com",
+    "email": "",
+    "form_endpoint": ""
+  },
+
+  "worn_on_tour": {
+    "title": "Worn on Tour",
+    "handle": "@worn.on.tour",
+    "quote": "It can be a tad uncomfortable to walk up to random people and ask to take a picture of them. So far it's been worth the awkwardness.",
+    "body": "A portrait project that combines the two hobbies: music and photography. Portraits, on film, of people around New York City wearing cool band merchandise. Neil Young tank tops, Smiths tees, Dead shirts that have clearly been to a lot of shows.",
+    "cta": "Follow along on Instagram"
+  },
+
+  "reviews_intro": "Borrowed from John Green's The Anthropocene Reviewed, and from a year-end newsletter where I rated the year on a five-star scale. Not self-help. Just a bit of fun.",
+  "reviews": [
+    { "thing": "Going to concerts", "stars": 5, "note": "Goose six times, Parcels, Luke Bryan, a bluegrass band at Sunny's in Red Hook, and rooms as small as Pete's Candy Store. The full concert experience." },
+    { "thing": "Burritos", "stars": 5, "note": "Officially my favorite food. Rating every new spot across four boroughs. Scrolling Reddit and Google Maps for the next one is one of my most relaxing activities." },
+    { "thing": "Shooting film", "stars": 5, "note": "Thirty-six chances per roll, and you don't find out for two weeks. Somehow that's the appeal." },
+    { "thing": "Cheap beer", "stars": 4, "note": "Reformed IPA snob with 370+ Untappd check-ins. Turns out the point was always sharing a round with people." },
+    { "thing": "New running shoes", "stars": 5, "note": "Like a car fresh off a tune-up. Gotta look good to feel good." },
+    { "thing": "Feeling uncomfortable", "stars": 3, "note": "Concerts alone, new jobs, asking strangers for a portrait. It never really goes away. You just stop letting it decide." },
+    { "thing": "Imposter syndrome", "stars": 2, "note": "If the main thing I don't like about my job is that I feel like I don't deserve it, I'm probably in the right room." },
+    { "thing": "Anora", "stars": 5, "note": "Best movie I watched last year. They absolutely nailed the ending." }
+  ],
+
+  "newsletter": {
+    "title": "If You Get Confused",
+    "subtitle": "A newsletter meant to be listened to.",
+    "origin": "Named for the Grateful Dead lyric: \"If you get confused, listen to the music play.\" It's a method that has always worked for me.",
+    "posts": [
+      { "n": "068", "title": "Bob Weir's Legacy, To Me", "sub": "A Millennial's lasting memory of Grateful Dead's Bob Weir", "date": "Jan 2026", "url": "https://ifyougetconfused.substack.com/archive" },
+      { "n": "067", "title": "2025 Reviewed", "sub": "Five-star reviews of some things from the past year", "date": "Dec 2025", "url": "https://ifyougetconfused.substack.com/p/if-you-get-confused-067-2025-reviewed" },
+      { "n": "066", "title": "The Man Behind Music's Greatest Photos", "sub": "Some thoughts on Jim Marshall", "date": "Dec 2025", "url": "https://ifyougetconfused.substack.com/archive" },
+      { "n": "062", "title": "Chain Yer Dragon", "sub": "Goose soars to new heights with a surprise studio album", "date": "Aug 2025", "url": "https://ifyougetconfused.substack.com/archive" },
+      { "n": "061", "title": "Worn on Tour", "sub": "Yet another venture", "date": "Aug 2025", "url": "https://ifyougetconfused.substack.com/p/if-you-get-confused-061-worn-on-tour" },
+      { "n": "060", "title": "My Concert Venue Bucket List", "sub": "Venues worth traveling for", "date": "Aug 2025", "url": "https://ifyougetconfused.substack.com/p/if-you-get-confused-060-my-concert" },
+      { "n": "059", "title": "What's the Grateful Dead's Best Song?", "sub": "A long strange trip to answer an impossible question. (Brown-Eyed Women.)", "date": "Jul 2025", "url": "https://ifyougetconfused.substack.com/p/if-you-get-confused-059-whats-the" }
+    ]
+  },
+
+  "bucket_list_intro": "Venues worth traveling for. Underrated places, something funky about the room, music I actually like, and logistics that won't ruin it for an anxious person.",
+  "bucket_list": [
+    { "venue": "Red Rocks Amphitheatre", "place": "Morrison, CO", "done": true, "note": "There are Red Rocks frames in the Travel roll, so we're counting it." },
+    { "venue": "The Gorge Amphitheatre", "place": "Quincy, WA", "done": false, "note": "Labor Dave Weekend. As a fellow Dave with a Labor Day birthday, this is destiny." },
+    { "venue": "Codfish Hollow Barnstormers", "place": "Maquoketa, IA", "done": false, "note": "A 600-cap barn in rural Iowa. What other reason would I have to go to Iowa?" },
+    { "venue": "Thekla", "place": "Bristol, UK", "done": false, "note": "A 600-cap cargo ship you see a show inside of." },
+    { "venue": "Paradiso", "place": "Amsterdam, NL", "done": false, "note": "An 1880 church. The Stones played it in '95." },
+    { "venue": "Johnny Brenda's", "place": "Philadelphia, PA", "done": false, "note": "Tiny Fishtown dive, shows upstairs. If I'm going to Philly, I'm going here." },
+    { "venue": "SPAC", "place": "Saratoga Springs, NY", "done": false, "note": "Was in town. It was Christian-rock weekend. Missed Phish by three weeks." },
+    { "venue": "Sphere", "place": "Las Vegas, NV", "done": false, "note": "A planetarium for hippies." }
+  ],
+
+  "film_log": {
+    "format": "35mm (135)",
+    "lab": "Nice Film Club, Brooklyn",
+    "stocks": [
+      { "name": "Kodak Portra 800", "iso": 800, "type": "Color negative", "used_for": "Concerts. Holds the stage color without turning everything magenta." },
+      { "name": "Kodak T-MAX 3200", "iso": 3200, "type": "B&W", "used_for": "Dark rooms. Grain the size of gravel, and that's the point." },
+      { "name": "Kodak Ultra Max 400", "iso": 400, "type": "Color negative", "used_for": "New York. Cheap, warm, forgiving." },
+      { "name": "Arista.EDU Ultra 400", "iso": 400, "type": "B&W", "used_for": "Travel. The budget roll you keep in the bag just in case." }
+    ]
+  },
+
+  "contact": {
+    "heading": "Say hi",
+    "body": "Want a print, want to be in Worn on Tour, want to argue about the Dead's best song, or have a burrito recommendation? Any of those work.",
+    "burrito_line": "Burrito recommendations get priority."
+  },
+
+  "footer_line": "Shot on 35mm in and around New York City. Scanned by Nice Film Club."
+}

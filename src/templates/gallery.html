@@ -1,0 +1,44 @@
+<section class="gal-head">
+  <div class="wrap">
+    <div class="kicker mono">{{kicker}}</div>
+    <h1>{{title}}</h1>
+    <div class="gal-head__row">
+      <p>{{blurb}}</p>
+      <div class="gal-head__meta mono">
+        <span><b>{{count}}</b> frames</span>
+        <span>{{stocks_line}}</span>
+        <span>{{lab_line}}</span>
+        {{extra_link}}
+      </div>
+    </div>
+    <nav class="setnav" aria-label="Photo series">
+      {{setnav}}
+    </nav>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="justified" id="grid" data-set="{{slug}}">
+    {{shots}}
+  </div>
+</section>
+
+<div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
+  <div class="lb__bar">
+    <span class="mono count"><b id="lb-n">1</b> / {{count}} &nbsp;·&nbsp; {{title}}</span>
+    <button class="lb__close mono" id="lb-close">Close <span aria-hidden="true">&times;</span></button>
+  </div>
+  <div class="lb__stage">
+    <button class="lb__nav lb__nav--prev" id="lb-prev" aria-label="Previous">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <img class="lb__img" id="lb-img" alt="">
+    <button class="lb__nav lb__nav--next" id="lb-next" aria-label="Next">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+  <div class="lb__cap">
+    <span class="mono" id="lb-place"></span>
+    <span class="mono stock" id="lb-stock"></span>
+  </div>
+</div>

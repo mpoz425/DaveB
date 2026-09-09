@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:image" content="{{og_image}}">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0d0c0a">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.myportfolio.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="{{body_class}}">
+
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="David Burton, home">
+    <span class="brand__mark">DB</span>
+    <span class="brand__name">David Burton</span>
+    <span class="brand__loc mono">Brooklyn, NY</span>
+  </a>
+  <button class="nav-toggle mono" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="nav" id="nav" aria-label="Primary">
+    <a href="{{home}}#photos" {{cur_photos}}>Photos</a>
+    <a href="{{home}}#worn">Worn on Tour</a>
+    <a href="{{home}}#reviewed">Reviewed</a>
+    <a href="{{home}}#newsletter">Newsletter</a>
+    <a href="{{home}}#bucket">Bucket list</a>
+    <a href="{{home}}#hi" class="nav__cta">Say hi</a>
+  </nav>
+</header>
+
+<main>
+{{content}}
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="mono">&copy; {{year}} David Burton</div>
+    <div class="mono footer__edge">
+      <span>{{footer_line}}</span>
+    </div>
+    <div class="mono">
+      <a href="{{newsletter}}" target="_blank" rel="noopener">Substack</a>
+      &nbsp;·&nbsp;
+      <a href="{{instagram}}" target="_blank" rel="noopener">@worn.on.tour</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js" defer></script>
+{{scripts}}
+</body>
+</html>
