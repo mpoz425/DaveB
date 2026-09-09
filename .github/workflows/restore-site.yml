@@ -1,0 +1,31 @@
+name: Restore exact site files
+
+on:
+  push:
+    paths:
+      - .github/workflows/restore-site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download verified source archive
+        run: |
+          curl --fail --location --retry 4 \
+            https://maintains-america-thorough-commissioner.trycloudflare.com/site.tar.gz \
+            --output /tmp/site.tar.gz
+          echo '5112394112c42024d9622f1b37651b2ed57442479127daec9454ccd96064f798  /tmp/site.tar.gz' | sha256sum --check
+      - name: Restore and commit site
+        run: |
+          tar -xzf /tmp/site.tar.gz
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git diff --cached --quiet || git commit -m 'Restore complete David Burton site'
+          git push origin main
