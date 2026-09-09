@@ -30,6 +30,13 @@ python3 build.py          # photos load from the existing Adobe Portfolio CDN
 python3 -m http.server -d dist 8000   # preview at http://localhost:8000
 ```
 
+## Deploy
+
+The site is the `dist/` folder, not the repo root. `vercel.json` sets
+`outputDirectory` to `dist` so Vercel serves `dist/index.html` at `/`. On other
+hosts (Netlify, Cloudflare Pages, GitHub Pages) point the publish directory at
+`dist` the same way, otherwise the root URL will 404.
+
 To self-host the images (recommended before the Adobe Portfolio is shut off):
 
 ```bash
