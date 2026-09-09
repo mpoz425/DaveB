@@ -1,6 +1,13 @@
 (function () {
   "use strict";
 
+  /* Keep the copyright year current without a rebuild */
+  var yearEl = document.getElementById("year");
+  if (yearEl) {
+    var now = new Date().getFullYear();
+    if (now > parseInt(yearEl.textContent, 10)) yearEl.textContent = String(now);
+  }
+
   /* Mobile nav */
   var toggle = document.querySelector(".nav-toggle");
   var nav = document.getElementById("nav");

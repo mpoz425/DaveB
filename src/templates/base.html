@@ -20,19 +20,19 @@
 <body class="{{body_class}}">
 
 <header class="topbar">
-  <a class="brand" href="index.html" aria-label="David Burton, home">
-    <span class="brand__mark">DB</span>
-    <span class="brand__name">David Burton</span>
-    <span class="brand__loc mono">Brooklyn, NY</span>
+  <a class="brand" href="index.html" aria-label="{{name}}, home">
+    <span class="brand__mark">{{initials}}</span>
+    <span class="brand__name">{{name}}</span>
+    <span class="brand__loc mono">{{location}}</span>
   </a>
   <button class="nav-toggle mono" aria-expanded="false" aria-controls="nav">Menu</button>
   <nav class="nav" id="nav" aria-label="Primary">
-    <a href="{{home}}#photos" {{cur_photos}}>Photos</a>
-    <a href="{{home}}#worn">Worn on Tour</a>
-    <a href="{{home}}#reviewed">Reviewed</a>
-    <a href="{{home}}#newsletter">Newsletter</a>
-    <a href="{{home}}#bucket">Bucket list</a>
-    <a href="{{home}}#hi" class="nav__cta">Say hi</a>
+    <a href="{{home}}#photos" {{cur_photos}}>{{nav_photos}}</a>
+    <a href="{{home}}#worn">{{nav_worn}}</a>
+    <a href="{{home}}#reviewed">{{nav_reviewed}}</a>
+    <a href="{{home}}#newsletter">{{nav_newsletter}}</a>
+    <a href="{{home}}#bucket">{{nav_bucket}}</a>
+    <a href="{{home}}#hi" class="nav__cta">{{nav_hi}}</a>
   </nav>
 </header>
 
@@ -42,14 +42,14 @@
 
 <footer class="footer">
   <div class="wrap">
-    <div class="mono">&copy; {{year}} David Burton</div>
+    <div class="mono">&copy; {{copyright_years}} {{name}}</div>
     <div class="mono footer__edge">
       <span>{{footer_line}}</span>
     </div>
     <div class="mono">
       <a href="{{newsletter}}" target="_blank" rel="noopener">Substack</a>
       &nbsp;·&nbsp;
-      <a href="{{instagram}}" target="_blank" rel="noopener">@worn.on.tour</a>
+      <a href="{{instagram}}" target="_blank" rel="noopener">{{worn_handle}}</a>
     </div>
   </div>
 </footer>
