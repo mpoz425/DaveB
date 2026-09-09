@@ -111,7 +111,9 @@ to the `series` select and a new photos file entry in `.pages.yml`.
 
 1. **Vercel** — `vercel.json` sets the build command (`python3 build.py`) and
    output directory (`dist`), overriding whatever the project dashboard says.
-   Nothing else to configure; pushes to `main` deploy.
+   Nothing else to configure; pushes to `main` deploy. On any other host
+   (Netlify, Cloudflare Pages, GitHub Pages) use the same build command and
+   point the publish directory at `dist`, otherwise the root URL will 404.
 2. **Deploy hook** — Vercel → Project → Settings → Git → Deploy Hooks → create
    one for `main`. Add its URL as a GitHub Actions secret named
    `VERCEL_DEPLOY_HOOK_URL`. This powers the weekly rebuild and the CMS
