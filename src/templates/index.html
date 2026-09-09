@@ -1,0 +1,205 @@
+<!-- ============================== HERO ============================== -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero__edge mono" aria-hidden="true">
+      <span>Kodak Portra 800 &nbsp;&#9656;&nbsp; 135-36</span>
+      <span>David Burton &nbsp;&#9656;&nbsp; Home base</span>
+      <span>{{hero_frames}}</span>
+    </div>
+
+    <div class="hero__titlewrap">
+      <h1 class="hero__title">
+        <span class="l1">David</span>
+        <span class="l2">Burton</span>
+      </h1>
+      <span class="hero__note hand" aria-hidden="true">still a work<br>in progress &#8600;</span>
+    </div>
+
+    <div class="hero__row">
+      <p class="hero__line">
+        Brooklyn guy who <span class="rotator" data-words='{{hero_words_json}}'><span class="rotator__word">{{hero_word_0}}</span></span>.
+      </p>
+      <div>
+        <p class="hero__intro">{{hero_intro}}</p>
+        <div class="hero__meta mono">
+          <span><b>35mm</b> &nbsp;film</span>
+          <span><b>{{total_frames}}</b> &nbsp;frames here</span>
+          <span><b>{{location}}</b></span>
+        </div>
+        <a class="hero__scroll mono" href="#photos">Scroll for the rolls <i></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FILMSTRIP ============================== -->
+<section class="filmstrip" aria-label="Selected frames">
+  <div class="filmstrip__edge filmstrip__edge--top mono" aria-hidden="true">{{edge_top}}</div>
+  <div class="filmstrip__track">
+    {{strip_frames}}
+    {{strip_frames}}
+  </div>
+  <div class="filmstrip__edge filmstrip__edge--bottom mono" aria-hidden="true">{{edge_bottom}}</div>
+</section>
+
+<!-- ============================== STATUS ============================== -->
+<section class="status">
+  <div class="wrap reveal">
+    <div class="status__head">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="mono">Currently</span>
+      <span class="hand">yet another venture</span>
+    </div>
+    <dl class="status__grid">
+      {{status_items}}
+    </dl>
+  </div>
+</section>
+
+<!-- ============================== SERIES ============================== -->
+<section class="section series" id="photos">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <div class="kicker mono">The rolls</div>
+        <h2>Photos, by the<br>roll they came off</h2>
+        <p class="lede">Four film series and one digital one. Concerts are the reason the camera exists. Everything else is what happened between shows.</p>
+      </div>
+      <div class="aside mono">{{series_aside}}</div>
+    </div>
+    <div class="series__grid">
+      {{series_cards}}
+    </div>
+  </div>
+</section>
+
+<!-- ============================== WORN ON TOUR ============================== -->
+<section class="section worn" id="worn">
+  <div class="wrap worn__grid">
+    <div class="worn__text reveal">
+      <div class="kicker mono">Portrait project &nbsp;·&nbsp; {{worn_handle}}</div>
+      <h2>{{worn_title}}<span class="hand">band tees, on film, on strangers</span></h2>
+      <blockquote>{{worn_quote}}</blockquote>
+      <p>{{worn_body}}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn btn--solid" href="{{instagram}}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          {{worn_cta}}
+        </a>
+        <a class="btn" href="worn-on-tour.html">See the portraits &rarr;</a>
+      </div>
+    </div>
+    <div class="worn__wall reveal">
+      {{worn_polaroids}}
+    </div>
+  </div>
+</section>
+
+<!-- ============================== REVIEWED ============================== -->
+<section class="section paper reviewed" id="reviewed">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <div class="kicker mono">Reviewed</div>
+        <h2>Things I love,<br>on a five-star scale</h2>
+        <p class="lede">{{reviews_intro}}</p>
+      </div>
+      <div class="aside mono">Scale: &#9733; to &#9733;&#9733;&#9733;&#9733;&#9733;</div>
+    </div>
+    <div class="reviews reveal">
+      {{review_cards}}
+    </div>
+    <p style="margin:26px 0 0"><a class="btn" href="{{review_source}}" target="_blank" rel="noopener">Read the full year in review &rarr;</a></p>
+  </div>
+</section>
+
+<!-- ============================== NEWSLETTER ============================== -->
+<section class="section newsletter" id="newsletter">
+  <div class="wrap newsletter__grid">
+    <div class="masthead reveal">
+      <div class="kicker mono">The newsletter</div>
+      <h2>If You Get <em>Confused</em></h2>
+      <p class="sub">{{nl_subtitle}}</p>
+      <p class="origin">{{nl_origin}}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn btn--solid" href="{{newsletter_subscribe}}" target="_blank" rel="noopener">Subscribe, it's free</a>
+        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">Browse the archive</a>
+      </div>
+    </div>
+    <div class="reveal">
+      <ol class="posts">
+        {{post_items}}
+      </ol>
+      <p class="mono" style="color:var(--ink-3);margin-top:18px">Issue numbers in order of how much I overthought them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== BUCKET LIST ============================== -->
+<section class="section bucket" id="bucket">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <div class="kicker mono">Venue bucket list</div>
+        <h2>Rooms worth<br>traveling for</h2>
+        <p class="lede">{{bucket_intro}}</p>
+      </div>
+      <div class="aside mono">{{bucket_tally}}</div>
+    </div>
+    <ol class="bucket__list reveal">
+      {{bucket_items}}
+    </ol>
+  </div>
+</section>
+
+<!-- ============================== FILM LOG ============================== -->
+<section class="section filmlog">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <div class="kicker mono">Film log</div>
+        <h2>What's in the bag</h2>
+      </div>
+      <div class="aside mono">Format: <b style="color:var(--ink-2);font-weight:400">{{film_format}}</b></div>
+    </div>
+    <div class="reveal">
+      <table>
+        <thead>
+          <tr><th class="mono">Stock</th><th class="mono">ISO</th><th class="mono">Type</th><th class="mono">Used for</th></tr>
+        </thead>
+        <tbody>
+          {{film_rows}}
+        </tbody>
+      </table>
+      <div class="filmlog__meta mono">
+        <span>Developed &amp; scanned by <b>{{film_lab}}</b></span>
+        <span>Every frame here is <b>{{film_format}}</b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CONTACT ============================== -->
+<section class="section contact" id="hi">
+  <div class="wrap contact__grid">
+    <div class="reveal">
+      <h2>{{contact_heading}}</h2>
+      <p>{{contact_body}}</p>
+      <span class="hand">{{contact_burrito}}</span>
+      <div class="social">
+        <a class="btn" href="{{instagram}}" target="_blank" rel="noopener">Instagram &nbsp;·&nbsp; @worn.on.tour</a>
+        <a class="btn" href="{{newsletter}}" target="_blank" rel="noopener">Substack &nbsp;·&nbsp; If You Get Confused</a>
+        {{email_button}}
+      </div>
+    </div>
+    <form class="form reveal" {{form_attrs}}>
+      <div class="row">
+        <label><span class="mono">Name</span><input type="text" name="name" required autocomplete="name"></label>
+        <label><span class="mono">Email</span><input type="email" name="email" required autocomplete="email"></label>
+      </div>
+      <label><span class="mono">Message</span><textarea name="message" required placeholder="Burrito spot, band, show, or a print you want."></textarea></label>
+      <button class="btn btn--solid" type="submit">Send it</button>
+      <p class="form__note mono">{{form_note}}</p>
+    </form>
+  </div>
+</section>
