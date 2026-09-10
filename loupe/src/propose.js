@@ -57,6 +57,9 @@ export async function propose({ ops, uploads = [], title, note = "", cwd = proce
   if (!ops.length && !uploads.length) throw new Error("nothing to propose");
   const info = repoInfo(cwd, remote);
   const head = git(cwd, ["rev-parse", "HEAD"]).trim();
+  // The site may live in a subdirectory of its repository (Hugo's exampleSite/).
+  const prefix = git(cwd, ["rev-parse", "--show-prefix"]).trim();
+  const inRepo = (file) => prefix + file;
   const indexFile = path.join(os.tmpdir(), `loupe-index-${process.pid}-${Date.now()}`);
   const env = { ...process.env, GIT_INDEX_FILE: indexFile };
   const files = [];
@@ -66,22 +69,22 @@ export async function propose({ ops, uploads = [], title, note = "", cwd = proce
       safePath(cwd, file);
       let base;
       try {
-        base = git(cwd, ["show", `${head}:${file}`]);
+        base = git(cwd, ["show", `${head}:${inRepo(file)}`]);
       } catch {
         base = fs.readFileSync(path.resolve(cwd, file), "utf8"); // untracked: start from the working copy
       }
       const out = patchText(file, base, fileOps);
       if (out === base) continue;
       const blob = git(cwd, ["hash-object", "-w", "--stdin"], { input: out }).trim();
-      git(cwd, ["update-index", "--add", "--cacheinfo", `100644,${blob},${file}`], { env });
-      files.push(file);
+      git(cwd, ["update-index", "--add", "--cacheinfo", `100644,${blob},${inRepo(file)}`], { env });
+      files.push(inRepo(file));
     }
     for (const file of uploads) {
       const abs = safePath(cwd, file);
       if (!fs.existsSync(abs)) continue;
       const blob = git(cwd, ["hash-object", "-w", abs]).trim();
-      git(cwd, ["update-index", "--add", "--cacheinfo", `100644,${blob},${file}`], { env });
-      files.push(file);
+      git(cwd, ["update-index", "--add", "--cacheinfo", `100644,${blob},${inRepo(file)}`], { env });
+      files.push(inRepo(file));
     }
     if (!files.length) throw new Error("the edits produce no change against the current commit");
     const tree = git(cwd, ["write-tree"], { env }).trim();
@@ -90,7 +93,9 @@ export async function propose({ ops, uploads = [], title, note = "", cwd = proce
     const branch = `loupe/${stamp()}-${slug(title)}`;
     git(cwd, ["update-ref", `refs/heads/${branch}`, commit]);
     const diffstat = git(cwd, ["diff", "--stat", head, commit]).trim();
-    const diff = git(cwd, ["diff", head, commit, "--", ...files.filter((f) => !uploads.includes(f))]);
+    const uploaded = new Set(uploads.map(inRepo));
+    // ":/" makes the pathspec top-level relative, matching the paths we wrote into the tree.
+    const diff = git(cwd, ["diff", head, commit, "--", ...files.filter((f) => !uploaded.has(f)).map((f) => `:/${f}`)]);
 
     let pushed = false, url = null, pushError = null;
     if (push && info.remoteUrl) {
