@@ -5,8 +5,10 @@
 //   { op: "reorder", ref: "data/reviews.json#",        order: [2, 0, { copyOf: 1 }, 3] }
 //
 // "reorder" rebuilds an array from the listed original indices; entries that
-// are missing are removed and { copyOf } entries are deep copies, so one op
-// expresses any combination of move / delete / duplicate the overlay produced.
+// are missing are removed, { copyOf } entries are deep copies and { blankFrom }
+// entries are copies with every string emptied (a fresh item shaped like an
+// existing one), so one op expresses any combination of move / delete /
+// duplicate / add the overlay produced.
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
@@ -21,12 +23,29 @@ function coerce(oldValue, value) {
   return value;
 }
 
+function blank(v) {
+  if (typeof v === "string") return "";
+  if (typeof v === "boolean") return false;
+  if (Array.isArray(v)) return [];
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blank(x)]));
+  return v;
+}
+
+function orderIndex(o) {
+  return typeof o === "object" ? (o.copyOf ?? o.blankFrom) : o;
+}
+
+function derive(o, value) {
+  if (typeof o !== "object") return value;
+  return "blankFrom" in o ? blank(structuredClone(value)) : structuredClone(value);
+}
+
 function reorderPlain(arr, order) {
   if (!Array.isArray(arr)) throw new Error("reorder target is not an array");
   return order.map((o) => {
-    const i = typeof o === "object" ? o.copyOf : o;
+    const i = orderIndex(o);
     if (!(i in arr)) throw new Error(`reorder index ${i} out of range`);
-    return typeof o === "object" ? structuredClone(arr[i]) : arr[i];
+    return derive(o, arr[i]);
   });
 }
 
@@ -53,9 +72,9 @@ function applyToYamlDoc(doc, tokens, op) {
     if (!YAML.isSeq(seq)) throw new Error("reorder target is not a sequence");
     const items = seq.items;
     seq.items = op.order.map((o) => {
-      const i = typeof o === "object" ? o.copyOf : o;
+      const i = orderIndex(o);
       if (!(i in items)) throw new Error(`reorder index ${i} out of range`);
-      return typeof o === "object" ? doc.createNode(structuredClone(YAML.isNode(items[i]) ? items[i].toJSON() : items[i])) : items[i];
+      return typeof o === "object" ? doc.createNode(derive(o, YAML.isNode(items[i]) ? items[i].toJSON() : items[i])) : items[i];
     });
   } else throw new Error(`unknown op ${op.op}`);
 }
@@ -102,8 +121,9 @@ function spliceYaml(raw, tokens, op) {
     if (seps.size > 1) return null;
     const sep = seps.size ? [...seps][0] : null;
     const valueOf = (i) => raw.slice(seq.items[i].range[0], seq.items[i].range[2]);
+    if (op.order.some((o) => typeof o === "object" && "blankFrom" in o)) return null; // needs re-serialisation
     const parts = op.order.map((o) => {
-      const i = typeof o === "object" ? o.copyOf : o;
+      const i = orderIndex(o);
       if (!(i in seq.items)) throw new Error(`reorder index ${i} out of range`);
       return valueOf(i);
     });
@@ -158,25 +178,39 @@ function writeMarkdown(raw, ops) {
   return front === null ? body : `${fence}${lang}\n${front}\n${fence}\n${body}`;
 }
 
-export function applyPatch(ops, { cwd = process.cwd() } = {}) {
+// Group ops by file, keeping their order within each file.
+export function groupOps(ops) {
   const byFile = new Map();
   for (const op of ops) {
     const { file, path: p } = splitRef(op.ref);
     if (!byFile.has(file)) byFile.set(file, []);
     byFile.get(file).push({ tokens: parsePath(p), op });
   }
+  return byFile;
+}
+
+// Apply one file's ops to its text and return the new text.
+export function patchText(file, raw, fileOps) {
+  const ext = path.extname(file).toLowerCase();
+  if (ext === ".json") return writeJson(file, raw, fileOps);
+  if (ext === ".yml" || ext === ".yaml") return writeYaml(raw, fileOps);
+  if (ext === ".toml") return writeToml(raw, fileOps);
+  if (ext === ".md" || ext === ".markdown") return writeMarkdown(raw, fileOps);
+  throw new Error(`unsupported file type: ${file}`);
+}
+
+export function safePath(cwd, file) {
+  const abs = path.resolve(cwd, file);
+  if (!abs.startsWith(path.resolve(cwd) + path.sep)) throw new Error(`refusing to touch a path outside the project: ${file}`);
+  return abs;
+}
+
+export function applyPatch(ops, { cwd = process.cwd() } = {}) {
   const changed = [];
-  for (const [file, fileOps] of byFile) {
-    const abs = path.resolve(cwd, file);
-    if (!abs.startsWith(path.resolve(cwd) + path.sep)) throw new Error(`refusing to write outside the project: ${file}`);
+  for (const [file, fileOps] of groupOps(ops)) {
+    const abs = safePath(cwd, file);
     const raw = fs.readFileSync(abs, "utf8");
-    const ext = path.extname(abs).toLowerCase();
-    let out;
-    if (ext === ".json") out = writeJson(abs, raw, fileOps);
-    else if (ext === ".yml" || ext === ".yaml") out = writeYaml(raw, fileOps);
-    else if (ext === ".toml") out = writeToml(raw, fileOps);
-    else if (ext === ".md" || ext === ".markdown") out = writeMarkdown(raw, fileOps);
-    else throw new Error(`unsupported file type: ${file}`);
+    const out = patchText(file, raw, fileOps);
     if (out !== raw) {
       fs.writeFileSync(abs, out);
       changed.push(file);

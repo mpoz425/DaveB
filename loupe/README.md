@@ -45,7 +45,9 @@ node loupe/cli.js --content _config.yml --content _data --content _posts --outpu
 ## Editing in place
 
 ```bash
-node loupe/serve.js --content data --output dist --build "python3 build.py --no-fetch"
+node loupe/serve.js --content data --output dist \
+    --build "python3 build.py --no-fetch" \
+    --uploads assets/photos=/photos
 # open http://localhost:4343/
 ```
 
@@ -54,14 +56,28 @@ overlaid with the editor:
 
 - Click any bound text to edit it inline (Enter commits, Esc cancels). Values
   with line breaks or markup, and Markdown bodies, open in a side panel.
-- Hover a list item for move / duplicate / delete, or drag items to reorder.
-- Click an image to change its `src` (and `alt` if bound).
-- "Save & rebuild" writes the edits back to the content files, re-runs the
-  build and reloads. "Changes" shows the resulting `git diff`.
+- Hover a list item for move / add / duplicate / delete, or drag items to
+  reorder. "Add" inserts a fresh item shaped like its neighbour (strings
+  emptied, booleans false) outlined in green; click its fields to fill it in.
+- Click an image to change its `src` (and `alt` if bound); with `--uploads
+  <dir>=<url>` you can drop a file onto the image or into the panel and it
+  is written to `<dir>` and referenced as `<url>/<name>`.
+- **Propose…** turns the pending edits into a commit on a new `loupe/*`
+  branch built with git plumbing, so the working copy and HEAD are never
+  touched. The branch is pushed to `--remote` (default `origin`); with
+  `LOUPE_GITHUB_TOKEN` (or `GITHUB_TOKEN`) set the pull request is created
+  directly, otherwise you get GitHub's pre-filled "open a pull request" link.
+  The panel shows the changes as a redline before you confirm and the
+  resulting diff afterwards. `--no-push` keeps the branch local.
+- **Save & rebuild** is the local loop: writes the edits into the working
+  copy, re-runs the build and reloads. **Changes** shows the working-copy
+  `git diff`.
 
 Writes are surgical: JSON keeps its indentation, YAML is spliced by node
 range so comments and blank lines survive, Markdown front matter and body
-are rewritten separately. TOML is re-serialised (comments are lost).
+are rewritten separately. TOML is re-serialised (comments are lost). Edits
+made inside items that were moved or added are re-indexed to where the
+item ended up before they are applied.
 
 ## What it does
 
@@ -137,17 +153,21 @@ What remains unbound, and why:
 ## Layout (editor)
 
 - `serve.js` — dev server: build, match, annotate, inject overlay, apply
-  patches, expose the diff.
+  patches, uploads, proposals, expose the diff.
 - `src/patch.js` — apply `set` / `reorder` ops to JSON, YAML, TOML and
-  Markdown files with minimal diffs.
+  Markdown files with minimal diffs (`reorder` entries may be an index,
+  `{ copyOf }` or `{ blankFrom }`).
+- `src/propose.js` — patch from HEAD into blobs, build a tree via a
+  temporary index, commit on a new branch, push, open/link the PR.
 - `src/paths.js` — `file#path` ref helpers.
 - `overlay/overlay.js`, `overlay/overlay.css` — the in-page editor.
 
 ## Next
 
-1. Proposals: turn saved edits into a branch + pull request and render the
-   diff as a redline on the page, so an editor never needs git.
-2. Editor gaps: image upload (not just URL), adding a brand-new list item
-   from a blank template, editing text nodes that mix several values.
+1. Hosting: run `serve.js` somewhere Dave can reach with a login in front,
+   so proposals do not require a developer's machine.
+2. Editor gaps: editing text nodes that mix several values; registering a
+   dropped photo as a new gallery entry (needs the site's own `add_photos`
+   step, so a per-site hook).
 3. Matcher robustness: JS-rendered snapshot, date/number format probes,
    exclusion of trivial link values (`/`, `#`) from ambiguity reporting.
