@@ -69,6 +69,14 @@ overlaid with the editor:
   directly, otherwise you get GitHub's pre-filled "open a pull request" link.
   The panel shows the changes as a redline before you confirm and the
   resulting diff afterwards. `--no-push` keeps the branch local.
+- **Fields (N)** opens a drawer with every editable value that is rendered
+  on *no* page at all — flags, URLs the build only follows, numbers used in
+  logic, copy for pages that are not built. The server matches every page
+  once per content change to work this out, so the list is exact rather than
+  guessed. Fields are grouped by file (files that also appear on the current
+  page first), and repeated array keys (`photos/*.json#*.med` × 144) fold
+  into one expandable group. Edits here go through the same pending-ops path
+  as in-place edits, so Save and Propose treat them identically.
 - **Save & rebuild** is the local loop: writes the edits into the working
   copy, re-runs the build and reloads. **Changes** shows the working-copy
   `git diff`.

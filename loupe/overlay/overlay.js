@@ -15,7 +15,9 @@
   const proposeBtn = el("button", { class: "loupe-btn loupe-primary", disabled: "", title: "Turn edits into a pull request" }, "Propose…");
   const discardBtn = el("button", { class: "loupe-btn", disabled: "" }, "Discard");
   const diffBtn = el("button", { class: "loupe-btn" }, "Changes");
-  bar.append(el("span", { id: "loupe-logo" }, "Loupe"), toggle, count, saveBtn, ...(boot.canPropose ? [proposeBtn] : []), discardBtn, diffBtn);
+  const fields = boot.fields || [];
+  const fieldsBtn = el("button", { class: "loupe-btn", title: "Content that is not shown on any page" }, `Fields (${fields.length})`);
+  bar.append(el("span", { id: "loupe-logo" }, "Loupe"), toggle, count, ...(fields.length ? [fieldsBtn] : []), saveBtn, ...(boot.canPropose ? [proposeBtn] : []), discardBtn, diffBtn);
   const panel = el("aside", { id: "loupe-panel", hidden: "" });
   const tools = el("div", { id: "loupe-item-tools", hidden: "" });
   const upBtn = el("button", { title: "Move up / left" }, "↑");
@@ -31,6 +33,7 @@
   saveBtn.onclick = save;
   proposeBtn.onclick = proposeDialog;
   diffBtn.onclick = showDiff;
+  fieldsBtn.onclick = showFields;
   document.addEventListener("keydown", (e) => {
     if (e.key === "e" && !e.metaKey && !e.ctrlKey && !isTyping(e.target)) setEditing(!editing);
     if (e.key === "Escape") closePanel();
@@ -592,6 +595,87 @@
     pending.clear();
     refresh();
   }
+  // ---------- fields drawer: content no page renders ----------
+  function fieldWidget(f) {
+    const current = getPending(f.ref)?.value ?? f.value;
+    let input;
+    if (f.type === "boolean") {
+      input = el("input", { type: "checkbox", class: "loupe-check" });
+      input.checked = current === true || current === "true";
+    } else if (f.type === "markdown" || /\n/.test(String(current)) || String(current).length > 90) {
+      input = el("textarea", { class: "loupe-ta loupe-ta-short" });
+      input.value = String(current);
+    } else {
+      input = el("input", { class: "loupe-input", type: "text", inputmode: f.type === "number" ? "decimal" : "text" });
+      input.value = String(current);
+    }
+    if (getPending(f.ref)) input.classList.add("loupe-pending");
+    const commit = () => {
+      const v = f.type === "boolean" ? String(input.checked) : input.value;
+      if (v === String(f.value)) {
+        clearPending(f.ref, null);
+        input.classList.remove("loupe-pending");
+      } else {
+        setPending(f.ref, { op: "set", ref: f.ref, value: f.type === "boolean" ? input.checked : v }, null);
+        input.classList.add("loupe-pending");
+      }
+    };
+    input.addEventListener("change", commit);
+    if (input.tagName !== "INPUT" || input.type !== "checkbox") input.addEventListener("blur", commit);
+    return input;
+  }
+  function fieldRow(f, label) {
+    const row = el("div", { class: "loupe-field" });
+    row.append(el("label", { title: f.ref }, label), fieldWidget(f));
+    return row;
+  }
+  function showFields() {
+    const search = el("input", { class: "loupe-input", type: "search", placeholder: "Filter fields…" });
+    const body = el("div", { class: "loupe-fields" });
+    const render = (q = "") => {
+      body.replaceChildren();
+      const needle = q.trim().toLowerCase();
+      const byFile = new Map();
+      for (const f of fields) {
+        if (needle && !(f.ref.toLowerCase().includes(needle) || String(f.value).toLowerCase().includes(needle))) continue;
+        const file = f.ref.split("#")[0];
+        if (!byFile.has(file)) byFile.set(file, { onPage: f.onPage, list: [] });
+        byFile.get(file).list.push(f);
+      }
+      const files = [...byFile.entries()].sort((a, b) => Number(b[1].onPage) - Number(a[1].onPage) || a[0].localeCompare(b[0]));
+      if (!files.length) body.append(el("p", { class: "loupe-hint" }, "Nothing matches."));
+      for (const [file, { onPage, list }] of files) {
+        const section = el("section", { class: "loupe-file" });
+        section.append(el("h3", {}, file), onPage ? el("span", { class: "loupe-badge" }, "used on this page") : "");
+        // Repeated array keys ("[3].med", "[7].med") fold into one expandable row.
+        const groups = new Map();
+        for (const f of list) {
+          const pattern = f.ref.split("#")[1].replace(/\[\d+\]/g, "[]");
+          if (!groups.has(pattern)) groups.set(pattern, []);
+          groups.get(pattern).push(f);
+        }
+        for (const [pattern, fs] of groups) {
+          if (fs.length === 1) {
+            section.append(fieldRow(fs[0], labelFor(fs[0].ref).split(" › ").slice(1).join(" › ") || labelFor(fs[0].ref)));
+            continue;
+          }
+          const det = el("details", { class: "loupe-group" });
+          det.append(el("summary", {}, `${pattern.replace(/\[\]/g, " › item").replace(/^\./, "").replace(/\./g, " › ") || "items"} × ${fs.length}`));
+          for (const f of fs) {
+            const idx = (f.ref.match(/\[(\d+)\]/g) || []).map((m) => m.slice(1, -1)).join(".");
+            det.append(fieldRow(f, `#${idx}`));
+          }
+          section.append(det);
+        }
+        body.append(section);
+      }
+    };
+    search.oninput = () => render(search.value);
+    render();
+    openPanel("Fields not shown on any page", el("p", { class: "loupe-hint" }, "These values exist in the content but the matcher found no place on the site where they appear, so they are edited here as fields. Edits count toward Save and Propose like any other."), search, body);
+    search.focus();
+  }
+
   async function showDiff() {
     const res = await fetch("/__loupe/diff");
     const { diff, status } = await res.json();
