@@ -14,6 +14,8 @@ import path from "node:path";
 import YAML from "yaml";
 import TOML from "@iarna/toml";
 import { splitRef, parsePath, getIn, setIn } from "./paths.js";
+import { MODULE_EXT, loadModule, spellings, walk, sourceOrder } from "./content.js";
+import os from "node:os";
 
 const FRONT = /^(---|\+\+\+)(\w*)\r?\n([\s\S]*?)\r?\n\1\r?\n?([\s\S]*)$/;
 
@@ -178,6 +180,95 @@ function writeMarkdown(raw, ops) {
   return front === null ? body : `${fence}${lang}\n${front}\n${fence}\n${body}`;
 }
 
+// Content modules (data/site.ts). There is no serialiser that would keep the
+// author's formatting, so edit the source text: find the literal that holds
+// the current value and replace it in place. The module is evaluated to know
+// the current values and to count earlier occurrences of the same key/value,
+// which disambiguates repeated literals ("year: 2023" in several entries).
+function evalModuleText(file, raw) {
+  const ext = path.extname(file);
+  const relativeImports = /from\s+["']\.{1,2}\//.test(raw) || /import\(["']\.{1,2}\//.test(raw);
+  const dir = relativeImports ? path.dirname(path.resolve(file)) : os.tmpdir();
+  const tmp = path.join(dir, `.loupe-${process.pid}-${Date.now()}${ext}`);
+  fs.writeFileSync(tmp, raw);
+  try {
+    return loadModule(tmp);
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+}
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function literalForms(value) {
+  if (typeof value === "string") return spellings(value);
+  if (typeof value === "number" || typeof value === "boolean") return [String(value)];
+  return null;
+}
+
+// All places where `value` is spelled out, optionally preceded by `key:`.
+function occurrences(raw, value, key) {
+  const forms = literalForms(value);
+  if (!forms) return [];
+  const lit = `(${forms.map(escapeRe).join("|")})`;
+  const re = key !== null
+    ? new RegExp(`(?<=^|[\\s,{])(?:${escapeRe(key)}|["']${escapeRe(key)}["'])\\s*:\\s*${lit}(?=\\s*[,}\\n]|\\s*//|\\s*$)`, "gm")
+    : new RegExp(lit + (typeof value === "string" ? "" : "(?![\\w.])"), "g");
+  const out = [];
+  for (const m of raw.matchAll(re)) {
+    const start = m.index + m[0].length - m[1].length;
+    out.push({ start, end: start + m[1].length, text: m[1] });
+  }
+  return out;
+}
+
+function renderLiteral(sample, value) {
+  if (typeof value !== "string") return String(value);
+  const q = sample[0];
+  const [dq, sq, bt] = spellings(value);
+  return q === "'" ? sq : q === "`" ? bt : dq;
+}
+
+function writeModule(file, raw, ops) {
+  const data = sourceOrder(evalModuleText(file, raw), raw);
+  let text = raw;
+  for (const { tokens, op } of ops) {
+    if (op.op !== "set") throw new Error(`${path.basename(file)}: reordering lists kept in code is not supported yet`);
+    const old = getIn(data, tokens);
+    if (old === undefined) throw new Error(`no value at ${tokens.join(".")} in ${file}`);
+    const value = coerce(old, op.value);
+    if (value === old) continue;
+    const last = tokens[tokens.length - 1];
+    const key = typeof last === "string" ? last : null;
+    // Ordinal among earlier leaves with the same (key,) value in source order.
+    let keyed = 0, bare = 0, found = false;
+    const target = tokens.join(".");
+    for (const leaf of walk(data, "", null)) {
+      const p = leaf.path.replace(/\[(\d+)\]/g, ".$1");
+      if (p === target) {
+        found = true;
+        break;
+      }
+      if (leaf.value !== old) continue;
+      bare++;
+      if (key !== null && p.endsWith("." + key)) keyed++;
+    }
+    if (!found) throw new Error(`no value at ${target} in ${file}`);
+    let hits = key !== null ? occurrences(text, old, key) : [];
+    let hit = hits[keyed];
+    if (!hit) {
+      hits = occurrences(text, old, null);
+      hit = hits[bare];
+    }
+    if (!hit) throw new Error(`could not find the literal for ${target} in ${file}; edit the source directly`);
+    text = text.slice(0, hit.start) + renderLiteral(hit.text, value) + text.slice(hit.end);
+    setIn(data, tokens, value);
+  }
+  return text;
+}
+
 // Group ops by file, keeping their order within each file.
 export function groupOps(ops) {
   const byFile = new Map();
@@ -196,6 +287,7 @@ export function patchText(file, raw, fileOps) {
   if (ext === ".yml" || ext === ".yaml") return writeYaml(raw, fileOps);
   if (ext === ".toml") return writeToml(raw, fileOps);
   if (ext === ".md" || ext === ".markdown") return writeMarkdown(raw, fileOps);
+  if (MODULE_EXT.test(file)) return writeModule(file, raw, fileOps);
   throw new Error(`unsupported file type: ${file}`);
 }
 
