@@ -101,25 +101,65 @@ function matchRich(elements, richLeaves, bindings, boundLeaves) {
     if (!elWords.has(el)) elWords.set(el, words(textWithBreaks(el)));
     return elWords.get(el);
   };
+  // Score every (leaf, region) pair by F1 of word overlap so that a body which
+  // is a strict subset of another (shared boilerplate paragraphs) still binds
+  // to its own page, then assign greedily without letting regions overlap.
+  const candidates = [];
+  // Inline HTML, image syntax and link targets never show up as page text.
+  const visibleWords = (s) =>
+    words(
+      String(s)
+        .replace(/<[^>]+>/g, " ")
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+        .replace(/\]\([^)]*\)/g, "]"),
+    );
   for (const leaf of richLeaves) {
-    const need = words(String(leaf.value));
-    if (need.length < 8) continue;
+    const need = visibleWords(leaf.value);
+    if (need.length < 5) continue;
     const needSet = new Set(need);
-    let best = null;
-    for (const el of elements) {
-      const have = wordsOf(el);
-      if (have.length < need.length * 0.9 || have.length > need.length * 3) continue;
+    const short = need.length < 12;
+    const minLen = need.length * 0.8;
+    const maxLen = need.length * (short ? 1.5 : 2.5);
+    const consider = (have, el, span) => {
+      if (have.length < minLen || have.length > maxLen) return;
       const haveSet = new Set(have);
       let hit = 0;
       for (const w of needSet) if (haveSet.has(w)) hit++;
-      const containment = hit / needSet.size;
-      if (containment < 0.9) continue;
-      if (!best || have.length < best.size) best = { el, size: have.length, containment };
+      const recall = hit / needSet.size;
+      const precision = hit / haveSet.size;
+      if (recall < (short ? 1 : 0.9)) return;
+      const f1 = (2 * precision * recall) / (precision + recall);
+      if (f1 < 0.8) return;
+      candidates.push({ leaf, el, span, nodes: span || [el], size: have.length, recall, f1 });
+    };
+    for (const el of elements) consider(wordsOf(el), el);
+    // A body often renders as sibling blocks (h1, p, p...) with no wrapper of its
+    // own, next to layout chrome. Try contiguous runs of element children.
+    for (const el of elements) {
+      const kids = Array.from(el.children);
+      if (kids.length < 2) continue;
+      for (let i = 0; i < kids.length; i++) {
+        let have = [];
+        for (let j = i; j < kids.length; j++) {
+          have = have.concat(wordsOf(kids[j]));
+          if (have.length > maxLen) break;
+          if (j > i) consider(have, el, kids.slice(i, j + 1));
+        }
+      }
     }
-    if (best) {
-      bindings.push({ kind: "rich", el: best.el, leaves: [leaf], tier: "rich", text: `${Math.round(best.containment * 100)}% of words` });
-      boundLeaves.add(leaf);
-    }
+  }
+  // Tie-break near-identical bodies (starter sites love duplicated lorem ipsum)
+  // by whether the file's other fields, e.g. its title, already bound on this page.
+  const filesOnPage = new Set(bindings.filter((b) => b.leaves.length === 1).map((b) => b.leaves[0].file));
+  const score = (c) => c.f1 + (filesOnPage.has(c.leaf.file) ? 0.05 : 0);
+  candidates.sort((a, b) => score(b) - score(a) || a.size - b.size);
+  const used = [];
+  const overlaps = (nodes) => used.some((u) => nodes.some((n) => u.contains(n) || n.contains(u)));
+  for (const c of candidates) {
+    if (boundLeaves.has(c.leaf) || overlaps(c.nodes)) continue;
+    bindings.push({ kind: "rich", el: c.el, span: c.span, leaves: [c.leaf], tier: "rich", text: `${Math.round(c.recall * 100)}% of words` });
+    boundLeaves.add(c.leaf);
+    used.push(...c.nodes);
   }
 }
 
@@ -317,7 +357,7 @@ export function match(document, leaves, bodies = []) {
     const len = tn.text.length;
     total += len;
     if (isHidden(tn.el)) decorative += len;
-    if (boundTextNodes.has(tn.node) || bindings.some((b) => b.kind === "rich" && b.el.contains(tn.node))) bound += len;
+    if (boundTextNodes.has(tn.node) || bindings.some((b) => b.kind === "rich" && (b.span || [b.el]).some((e) => e.contains(tn.node)))) bound += len;
     else {
       const partial = bindings.filter((b) => b.kind === "partial" && b.node === tn.node);
       for (const p of partial) bound += Math.min(len, loose(String(p.leaves[0].value)).length);
@@ -338,14 +378,23 @@ export function annotate(document, result) {
     }
     const r = ref(b.leaves[0]);
     if (b.kind === "attr") el.setAttribute(`data-edit-attr-${b.attr}`, r);
-    else if (b.kind === "rich") el.setAttribute("data-edit-rich", r);
+    else if (b.kind === "rich" && b.span) {
+      b.span.forEach((part, i) => {
+        part.setAttribute("data-edit-rich", r);
+        part.setAttribute("data-edit-rich-part", `${i + 1}/${b.span.length}`);
+      });
+      continue;
+    } else if (b.kind === "rich") el.setAttribute("data-edit-rich", r);
     else if (b.kind === "partial") el.setAttribute("data-edit-partial", ((el.getAttribute("data-edit-partial") || "") + " " + r).trim());
     else el.setAttribute("data-edit", r);
     if (b.tier !== "strict") el.setAttribute("data-edit-tier", b.tier);
     if (b.resolved) el.setAttribute("data-edit-resolved", b.resolved);
   }
   for (const list of result.lists) {
-    if (list.container) list.container.setAttribute("data-edit-list", list.key);
+    if (list.container) {
+      list.container.setAttribute("data-edit-list", list.key);
+      if (list.coverage !== list.of) list.container.setAttribute("data-edit-list-partial", `${list.coverage}/${list.of}`);
+    }
     for (const [i, el] of list.items) if (el && el.setAttribute) el.setAttribute("data-edit-item", `${list.key}[${i}]`);
   }
 }
