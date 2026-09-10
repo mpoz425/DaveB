@@ -14,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function classify(value, key) {
   if (typeof value === "boolean") return "boolean";
-  if (typeof value === "number") return "number";
+  if (typeof value === "number") return /^(w|h|width|height|size|bytes|ratio)$/i.test(key || "") ? "meta" : "number";
   if (typeof value !== "string") return "other";
   if (!value.trim()) return "empty";
   if (/^https?:\/\//i.test(value) || value.startsWith("mailto:") || value.startsWith("tel:")) return "url";

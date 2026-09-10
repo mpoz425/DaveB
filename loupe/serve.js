@@ -87,21 +87,54 @@ function run(cmd, cwd) {
   }
 }
 
-function renderPage(file, a, cwd) {
-  const { leaves, bodies } = loadContent(a.content, { cwd });
+const FIELD_TYPES = new Set(["text", "markdown", "url", "link", "media", "date", "number", "email", "phone", "boolean"]);
+
+function htmlFiles(dir) {
+  return fs.readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile() && /\.html?$/i.test(e.name))
+    .map((e) => path.join(e.parentPath ?? e.path, e.name))
+    .sort();
+}
+
+// Editable leaves that no page renders. They get no in-place binding, so the
+// overlay offers them as plain fields instead. Recomputed only when content or
+// output changes, since it means matching every page.
+const siteIndex = { stamp: null, unbound: [] };
+function unboundFields(a, cwd, outDir, content) {
+  const pages = htmlFiles(outDir);
+  const stamp = [...content.files.map((f) => path.resolve(cwd, f)), ...pages].map((f) => `${f}:${fs.statSync(f).mtimeMs}`).join("|");
+  if (siteIndex.stamp === stamp) return siteIndex.unbound;
+  const bound = new Set();
+  for (const page of pages) {
+    const dom = new JSDOM(fs.readFileSync(page, "utf8"));
+    for (const b of match(dom.window.document, content.leaves, content.bodies).bindings) if (b.leaves.length === 1) bound.add(b.leaves[0]);
+  }
+  siteIndex.stamp = stamp;
+  siteIndex.unbound = [...content.leaves, ...content.bodies]
+    .filter((l) => !bound.has(l) && FIELD_TYPES.has(l.type))
+    .map((l) => ({ ref: `${l.file}#${l.path}`, value: l.value, type: l.type }));
+  console.log(`fields drawer: ${siteIndex.unbound.length} value(s) not rendered on any page`);
+  return siteIndex.unbound;
+}
+
+function renderPage(file, a, cwd, outDir) {
+  const content = loadContent(a.content, { cwd });
   const dom = new JSDOM(fs.readFileSync(file, "utf8"));
   const doc = dom.window.document;
-  const result = match(doc, leaves, bodies);
+  const result = match(doc, content.leaves, content.bodies);
   annotate(doc, result);
   const values = {};
+  const filesOnPage = new Set();
   for (const b of result.bindings) {
     if (b.leaves.length !== 1) continue;
     const l = b.leaves[0];
     values[`${l.file}#${l.path}`] = l.value;
+    filesOnPage.add(l.file);
   }
+  const fields = unboundFields(a, cwd, outDir, content).map((f) => ({ ...f, onPage: filesOnPage.has(f.ref.split("#")[0]) }));
   const boot = doc.createElement("script");
   const info = repoInfo(cwd, a.remote);
-  boot.textContent = `window.__loupe=${JSON.stringify({ values, canBuild: Boolean(a.build), canUpload: Boolean(a.uploads), canPropose: Boolean(info.remoteUrl), base: info.base }).replace(/</g, "\\u003c")};`;
+  boot.textContent = `window.__loupe=${JSON.stringify({ values, fields, canBuild: Boolean(a.build), canUpload: Boolean(a.uploads), canPropose: Boolean(info.remoteUrl), base: info.base }).replace(/</g, "\\u003c")};`;
   const css = doc.createElement("link");
   css.rel = "stylesheet";
   css.href = "/__loupe/overlay.css";
@@ -175,7 +208,7 @@ function main() {
       if (!fs.existsSync(file) && a.uploads && rel.startsWith(a.uploads.url + "/")) file = path.join(safePath(cwd, a.uploads.dir), rel.slice(a.uploads.url.length + 1));
       if (!fs.existsSync(file)) return send(res, 404, `not found: ${rel}`);
       const ext = path.extname(file).toLowerCase();
-      if (ext === ".html" || ext === ".htm") return send(res, 200, renderPage(file, a, cwd), TYPES[".html"]);
+      if (ext === ".html" || ext === ".htm") return send(res, 200, renderPage(file, a, cwd, outDir), TYPES[".html"]);
       return send(res, 200, fs.readFileSync(file), TYPES[ext] || "application/octet-stream");
     } catch (e) {
       console.error(e);

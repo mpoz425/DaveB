@@ -52,6 +52,15 @@
 .loupe-error { color: #fca5a5; }
 .loupe-link { display: inline-block; text-decoration: none; text-align: center; }
 .loupe-code { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e5e7eb; word-break: break-all; }
+.loupe-fields { display: flex; flex-direction: column; gap: 14px; }
+.loupe-file h3 { margin: 0 0 6px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #93c5fd; display: inline; }
+.loupe-badge { margin-left: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #86efac; }
+.loupe-field { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
+.loupe-field label { color: #9ca3af; font-size: 12px; }
+.loupe-check { width: 16px; height: 16px; accent-color: #16a34a; }
+.loupe-group { margin: 6px 0; border: 1px solid #1f2937; border-radius: 6px; padding: 4px 10px; }
+.loupe-group summary { cursor: pointer; color: #d1d5db; font-size: 12px; padding: 4px 0; }
+.loupe-input.loupe-pending, .loupe-ta.loupe-pending, .loupe-check.loupe-pending { outline: 2px solid #f59e0b !important; outline-offset: 1px; }
 .loupe-blank { outline: 2px dashed rgba(134,239,172,.8) !important; outline-offset: 2px; }
 .loupe-uploading { opacity: .5; filter: grayscale(1); }
 .loupe-preview { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #000; }
