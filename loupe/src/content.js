@@ -19,10 +19,10 @@ export function classify(value, key) {
   if (!value.trim()) return "empty";
   if (/^https?:\/\//i.test(value) || value.startsWith("mailto:") || value.startsWith("tel:")) return "url";
   if (EMAIL.test(value)) return "email";
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return "date";
   if (PHONE.test(value) && /\d{3}/.test(value)) return "phone";
   if (MEDIA_EXT.test(value) || /^\/?[\w\-/.]+\.(svg|png|jpe?g)$/i.test(value)) return "media";
   if (/^[#/][\w\-/.#?=&]*$/.test(value)) return "link";
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return "date";
   if (/^\d+$/.test(value)) return "number";
   if (UUID.test(value) || /^[0-9a-f]{16,}$/i.test(value)) return "identifier";
   if (!/\s/.test(value) && /^[\w.-]+$/.test(value) && (ID_KEYS.test(key || "") || /(fields?|sections?|keys?|ids?|types?|kinds?)$/i.test(key || ""))) return "identifier";
@@ -49,10 +49,20 @@ function parseFile(file) {
   if (ext === ".toml") return { data: TOML.parse(raw) };
   if (ext === ".md" || ext === ".markdown") {
     const stripComments = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
-    const m = raw.match(/^(---|\+\+\+)\r?\n([\s\S]*?)\r?\n\1\r?\n?([\s\S]*)$/);
+    // Eleventy allows a language tag on the opening fence (---js, ---json, ---toml).
+    const m = raw.match(/^(---|\+\+\+)(\w*)\r?\n([\s\S]*?)\r?\n\1\r?\n?([\s\S]*)$/);
     if (m) {
-      const fm = m[1] === "---" ? YAML.parse(m[2]) : TOML.parse(m[2]);
-      return { data: fm || {}, body: stripComments(m[3]) };
+      const lang = m[2].toLowerCase();
+      let fm = {};
+      try {
+        if (m[1] === "+++" || lang === "toml") fm = TOML.parse(m[3]);
+        else if (lang === "json") fm = JSON.parse(m[3]);
+        else if (lang === "" || lang === "yaml" || lang === "yml") fm = YAML.parse(m[3]);
+        // JavaScript front matter cannot be evaluated safely; keep the body and skip the data.
+      } catch {
+        fm = {};
+      }
+      return { data: fm || {}, body: stripComments(m[4]) };
     }
     if (raw.trimStart().startsWith("{")) {
       // Hugo also accepts a leading JSON object as front matter.
