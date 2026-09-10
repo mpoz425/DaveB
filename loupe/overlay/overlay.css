@@ -38,6 +38,31 @@
   padding: 8px 10px; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap;
 }
 .loupe-ta { min-height: 45vh; resize: vertical; }
+.loupe-ta-short { min-height: 70px; }
+.loupe-drop {
+  border: 1px dashed #4b5563; border-radius: 6px; padding: 14px; text-align: center;
+  color: #9ca3af; cursor: pointer; font-size: 12px;
+}
+.loupe-drop:hover, .loupe-drop-over { border-color: #60a5fa; color: #e5e7eb; background: rgba(59,130,246,.08); }
+.loupe-redline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.loupe-redline li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: #0b1220; border-radius: 6px; border: 1px solid #1f2937; }
+.loupe-ref { font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #93c5fd; }
+.loupe-del { color: #fca5a5; text-decoration: line-through; text-decoration-color: rgba(252,165,165,.6); white-space: pre-wrap; }
+.loupe-ins { color: #86efac; text-decoration: none; white-space: pre-wrap; }
+.loupe-error { color: #fca5a5; }
+.loupe-link { display: inline-block; text-decoration: none; text-align: center; }
+.loupe-code { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e5e7eb; word-break: break-all; }
+.loupe-fields { display: flex; flex-direction: column; gap: 14px; }
+.loupe-file h3 { margin: 0 0 6px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #93c5fd; display: inline; }
+.loupe-badge { margin-left: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #86efac; }
+.loupe-field { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
+.loupe-field label { color: #9ca3af; font-size: 12px; }
+.loupe-check { width: 16px; height: 16px; accent-color: #16a34a; }
+.loupe-group { margin: 6px 0; border: 1px solid #1f2937; border-radius: 6px; padding: 4px 10px; }
+.loupe-group summary { cursor: pointer; color: #d1d5db; font-size: 12px; padding: 4px 0; }
+.loupe-input.loupe-pending, .loupe-ta.loupe-pending, .loupe-check.loupe-pending { outline: 2px solid #f59e0b !important; outline-offset: 1px; }
+.loupe-blank { outline: 2px dashed rgba(134,239,172,.8) !important; outline-offset: 2px; }
+.loupe-uploading { opacity: .5; filter: grayscale(1); }
 .loupe-preview { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #000; }
 .loupe-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .loupe-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #d1d5db; }
