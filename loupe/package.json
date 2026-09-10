@@ -1,0 +1,22 @@
+{
+  "name": "loupe",
+  "version": "1.0.0",
+  "description": "Match structured content files to rendered HTML so any static site becomes editable in place",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "bin": {
+    "loupe": "./cli.js"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "jsdom": "^29.1.1",
+    "yaml": "^2.9.0"
+  }
+}
