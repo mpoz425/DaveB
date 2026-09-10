@@ -163,18 +163,48 @@ function matchRich(elements, richLeaves, bindings, boundLeaves) {
   }
 }
 
-export function match(document, leaves, bodies = []) {
+// Overrides come from .loupe.json in the project:
+//   { "pin":    [{ "page": "/about.html", "selector": "h1", "ref": "data/copy.json#name", "attr": "src"? }],
+//     "ignore": [{ "ref": "data/copy.json#legal" }, { "page": "/", "selector": ".ticker" }] }
+// A missing "page" applies everywhere. Pins bind an element to a ref no matter
+// what its text says; ignores keep a value or a region out of the matcher.
+function normalizePage(p) {
+  if (!p) return null;
+  return ("/" + String(p).replace(/^\/+/, "")).replace(/\/index\.html?$/i, "/").replace(/\.html?$/i, "") || "/";
+}
+function appliesTo(entry, page) {
+  return !entry.page || normalizePage(entry.page) === normalizePage(page);
+}
+
+export function match(document, leaves, bodies = [], options = {}) {
+  const overrides = options.overrides || {};
+  const page = options.page || null;
+  const readonlyFiles = options.readonlyFiles || new Set();
+  const ignoredRefs = new Set((overrides.ignore || []).filter((e) => e.ref && appliesTo(e, page)).map((e) => e.ref));
+  if (ignoredRefs.size) {
+    leaves = leaves.filter((l) => !ignoredRefs.has(`${l.file}#${l.path}`));
+    bodies = bodies.filter((l) => !ignoredRefs.has(`${l.file}#${l.path}`));
+  }
   const idx = buildIndex(leaves.concat(bodies));
   const root = document.body || document.documentElement;
   const bindings = []; // { kind, node, el, attr, leaves, tier, text }
   const boundLeaves = new Set();
   const boundTextNodes = new Set();
+  const excluded = new Set();
+  const safeQuery = (sel) => {
+    try {
+      return [...document.querySelectorAll(sel)];
+    } catch {
+      return [];
+    }
+  };
+  for (const e of overrides.ignore || []) if (e.selector && appliesTo(e, page)) for (const el of safeQuery(e.selector)) excluded.add(el);
 
   // 1. Text nodes and attributes.
   const textNodes = [];
   const elements = [];
   const visit = (el) => {
-    if (SKIP_TAGS.has(el.tagName)) return;
+    if (SKIP_TAGS.has(el.tagName) || excluded.has(el)) return;
     elements.push(el);
     if (el.attributes) {
       for (const { name: a, value: v } of el.attributes) {
@@ -198,7 +228,28 @@ export function match(document, leaves, bodies = []) {
   }
   visit(root);
 
+  // 0. Pins win over everything the matcher would decide on its own.
+  const byRef = new Map(leaves.concat(bodies).map((l) => [`${l.file}#${l.path}`, l]));
+  for (const p of overrides.pin || []) {
+    if (!p.selector || !p.ref || !appliesTo(p, page)) continue;
+    const leaf = byRef.get(p.ref);
+    if (!leaf) continue;
+    for (const el of safeQuery(p.selector)) {
+      if (p.attr) {
+        bindings.push({ kind: "attr", el, attr: p.attr, leaves: [leaf], tier: "pinned", text: el.getAttribute(p.attr) || "" });
+        continue;
+      }
+      const own = [...el.childNodes].filter((n) => n.nodeType === 3 && strict(n.nodeValue));
+      if (own.length === 1 && !el.firstElementChild) bindings.push({ kind: "text", node: own[0], el, leaves: [leaf], tier: "pinned", text: strict(own[0].nodeValue) });
+      else bindings.push({ kind: "element", el, leaves: [leaf], tier: "pinned", text: strict(textWithBreaks(el)) });
+      el.querySelectorAll("*").forEach((d) => d.childNodes.forEach((n) => n.nodeType === 3 && boundTextNodes.add(n)));
+      el.childNodes.forEach((n) => n.nodeType === 3 && boundTextNodes.add(n));
+      boundLeaves.add(leaf);
+    }
+  }
+
   for (const tn of textNodes) {
+    if (boundTextNodes.has(tn.node)) continue;
     const hit = lookup(idx, tn.text);
     if (hit) {
       bindings.push({ kind: "text", node: tn.node, el: tn.el, leaves: hit.leaves, tier: hit.tier, text: tn.text });
@@ -346,7 +397,7 @@ export function match(document, leaves, bodies = []) {
     // Prefer the deepest container; drop ancestors of a candidate with equal coverage.
     const kept = candidates.filter((c) => !candidates.some((o) => o !== c && c.container !== o.container && c.container.contains(o.container) && o.coverage >= c.coverage));
     for (const c of kept) {
-      lists.push({ key, items: c.items, container: c.container, regular: true, duplicated: c.duplicated, coverage: c.coverage, of: itemCount });
+      lists.push({ key, items: c.items, container: c.container, regular: true, duplicated: c.duplicated, coverage: c.coverage, of: itemCount, readonly: readonlyFiles.has(key.split("#")[0]) });
     }
   }
 
@@ -394,6 +445,7 @@ export function annotate(document, result) {
     if (list.container) {
       list.container.setAttribute("data-edit-list", list.key);
       if (list.coverage !== list.of) list.container.setAttribute("data-edit-list-partial", `${list.coverage}/${list.of}`);
+      if (list.readonly) list.container.setAttribute("data-edit-list-readonly", "");
     }
     for (const [i, el] of list.items) if (el && el.setAttribute) el.setAttribute("data-edit-item", `${list.key}[${i}]`);
   }
