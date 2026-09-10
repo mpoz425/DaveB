@@ -3,8 +3,12 @@
 //   { file: "data/reviews.json", path: "[2].note", value: "Thirty-six chances…", type: "text" }
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import YAML from "yaml";
 import TOML from "@iarna/toml";
+
+export const MODULE_EXT = /\.(m?[jt]s|cjs)$/i;
+export const CONTENT_EXT = /\.(json|ya?ml|toml|md|markdown|m?[jt]s|cjs)$/i;
 
 const MEDIA_EXT = /\.(jpe?g|png|gif|webp|avif|svg|mp4|webm|mp3|pdf|ico)$/i;
 const ID_KEYS = /(^|[_-])(id|uuid|slug|key|ref|type|kind|medium|series|layout|template|status|variant|icon|logo|weight|lang|locale|code|font|section|field|tracker|trackerID|analytics)s?$/i;
@@ -31,7 +35,7 @@ export function classify(value, key) {
   return "text";
 }
 
-function* walk(value, p, key) {
+export function* walk(value, p, key) {
   if (Array.isArray(value)) {
     for (let i = 0; i < value.length; i++) yield* walk(value[i], `${p}[${i}]`, key);
   } else if (value && typeof value === "object") {
@@ -77,7 +81,52 @@ function parseFile(file) {
     }
     return { data: {}, body: stripComments(raw) };
   }
+  if (MODULE_EXT.test(file)) return { data: sourceOrder(loadModule(file), raw), module: true, raw };
   return null;
+}
+
+// Content kept in code (data/site.ts in a Next.js project): evaluate the module
+// in a child process and take its exports as the data. Node strips the type
+// annotations itself, so no TypeScript toolchain is needed. Values that are not
+// spelled out as literals in the source (template strings, references to other
+// values) are marked computed: they can be matched but not edited.
+export function loadModule(file) {
+  const script = `import * as m from ${JSON.stringify("file://" + path.resolve(file))};
+const out = {};
+for (const [k, v] of Object.entries(m)) if (typeof v !== "function") out[k] = v;
+process.stdout.write(JSON.stringify(out));`;
+  const flags = ["--no-warnings", "--input-type=module"];
+  if (/\.m?ts$/i.test(file)) flags.unshift("--experimental-strip-types");
+  const r = spawnSync(process.execPath, [...flags, "-e", script], { encoding: "utf8", timeout: 20000, cwd: path.dirname(file) });
+  if (r.status !== 0) throw new Error(`could not load ${file}: ${(r.stderr || "").trim().split("\n").slice(-3).join(" ")}`);
+  return JSON.parse(r.stdout || "{}");
+}
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// A module namespace lists exports alphabetically; ordinals must follow the
+// source, so put the exports back in declaration order.
+export function sourceOrder(data, raw) {
+  const pos = (name) => {
+    const re = name === "default" ? /\bexport\s+default\b/ : new RegExp(`\\b(?:const|let|var|function|class)\\s+${escapeRe(name)}\\b|\\bexport\\s*\\{[^}]*\\b${escapeRe(name)}\\b`);
+    const m = re.exec(raw);
+    return m ? m.index : Infinity;
+  };
+  return Object.fromEntries(Object.entries(data).sort(([a], [b]) => pos(a) - pos(b)));
+}
+
+// Does the module source spell this string out as a literal?
+export function literalIn(raw, value) {
+  if (typeof value !== "string") return true;
+  return spellings(value).some((s) => raw.includes(s));
+}
+
+export function spellings(value) {
+  const json = JSON.stringify(value);
+  const inner = json.slice(1, -1);
+  return [json, `'${inner.replace(/\\"/g, '"').replace(/'/g, "\\'")}'`, "`" + value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${") + "`"];
 }
 
 function closingBrace(s, start) {
@@ -105,6 +154,8 @@ function isContentLeaf(file, leaf) {
   const base = path.basename(file);
   if (CONFIG_FILE.test(base)) return CONFIG_CONTENT.test(leaf.path);
   if (/\.(md|markdown)$/i.test(base)) return !META_KEYS.test(leaf.path);
+  // Eleventy directory data files (blog.11tydata.js) carry build settings for a folder of posts.
+  if (/\.11tydata\.[mc]?js$/i.test(base)) return !META_KEYS.test(leaf.path.replace(/^default\./, "")) && !/^(default\.)?(tags|eleventy\w*)(\.|\[|$)/.test(leaf.path);
   return true;
 }
 
@@ -120,19 +171,51 @@ export function loadContent(roots, { cwd = process.cwd() } = {}) {
     for (const entry of fs.readdirSync(abs, { recursive: true, withFileTypes: true })) {
       if (!entry.isFile()) continue;
       const full = path.join(entry.parentPath ?? entry.path, entry.name);
-      if (/\.(json|ya?ml|toml|md|markdown)$/i.test(entry.name) && !entry.name.startsWith(".")) files.push(full);
+      if (CONTENT_EXT.test(entry.name) && !entry.name.startsWith(".") && !/\.(d|test|spec|config)\.[mc]?[jt]s$/i.test(entry.name)) files.push(full);
     }
   }
   const leaves = [];
   const bodies = [];
+  const capabilities = {};
   for (const file of files.sort()) {
-    const parsed = parseFile(file);
+    let parsed;
+    try {
+      parsed = parseFile(file);
+    } catch (e) {
+      console.error(`loupe: skipping ${path.relative(cwd, file)}: ${e.message}`);
+      continue;
+    }
     if (!parsed) continue;
     const rel = path.relative(cwd, file);
+    if (parsed.module) capabilities[rel] = { reorder: false, module: true };
     for (const leaf of walk(parsed.data, "", null)) {
-      leaves.push({ file: rel, ...leaf, ...(isContentLeaf(file, leaf) ? {} : { type: "meta" }) });
+      const out = { file: rel, ...leaf, ...(isContentLeaf(file, leaf) ? {} : { type: "meta" }) };
+      if (parsed.module && out.type !== "meta" && !literalIn(parsed.raw, leaf.value)) {
+        out.computed = true;
+        out.type = "meta";
+      }
+      leaves.push(out);
     }
     if (parsed.body && parsed.body.trim()) bodies.push({ file: rel, path: "body", value: parsed.body, type: "markdown" });
   }
-  return { files: files.map((f) => path.relative(cwd, f)), leaves, bodies };
+  return { files: files.map((f) => path.relative(cwd, f)), leaves, bodies, capabilities };
+}
+
+// Cheap fingerprint of the content roots, for callers that cache loadContent().
+export function contentStamp(roots, { cwd = process.cwd() } = {}) {
+  const parts = [];
+  for (const root of roots) {
+    const abs = path.resolve(cwd, root);
+    if (!fs.existsSync(abs)) continue;
+    if (fs.statSync(abs).isFile()) {
+      parts.push(`${abs}:${fs.statSync(abs).mtimeMs}`);
+      continue;
+    }
+    for (const entry of fs.readdirSync(abs, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile() || !CONTENT_EXT.test(entry.name)) continue;
+      const full = path.join(entry.parentPath ?? entry.path, entry.name);
+      parts.push(`${full}:${fs.statSync(full).mtimeMs}`);
+    }
+  }
+  return parts.join("|");
 }
