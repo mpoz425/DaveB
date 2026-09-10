@@ -3,9 +3,56 @@
 (() => {
   const boot = window.__loupe || { values: {} };
   const values = boot.values;
-  const pending = new Map(); // ref -> op
+  const page = boot.page || location.pathname;
+  const pending = new Map(); // ref -> op (this page)
   const listState = new Map(); // container -> { key, initial: string, entries: WeakMap(item -> index|{copyOf}) }
   let editing = true;
+
+  // ---------- session: edits survive navigation and reloads ----------
+  // localStorage holds, per page, the final ops (indices already translated)
+  // plus the values they replace, so the basket can show a redline for pages
+  // that are not the current one.
+  const SESSION_KEY = "loupe:session";
+  function loadSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
+      return s && s.pages ? s : { pages: {} };
+    } catch {
+      return { pages: {} };
+    }
+  }
+  const session = loadSession();
+  const foreign = () => Object.entries(session.pages).filter(([p]) => p !== page);
+  const foreignOps = () => foreign().flatMap(([, e]) => e.ops);
+  const oldValueOf = (ref) => {
+    if (ref in values) return values[ref];
+    for (const [, e] of Object.entries(session.pages)) if (e.old && ref in e.old) return e.old[ref];
+    const f = (boot.fields || []).find((x) => x.ref === ref);
+    return f ? f.value : undefined;
+  };
+  function persist() {
+    const ops = finalOps();
+    if (ops.length) {
+      const old = {};
+      for (const op of ops) if (op.op === "set") old[op.ref] = oldValueOf(op.ref);
+      session.pages[page] = { ops, old, title: document.title, at: Date.now() };
+    } else delete session.pages[page];
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {
+      /* storage full or disabled: edits still live in memory */
+    }
+  }
+  function clearSession() {
+    session.pages = {};
+    localStorage.removeItem(SESSION_KEY);
+  }
+  // Every op the server should apply: other pages' first (already final), then
+  // this page's. Reorders go before sets across the board.
+  function allOps() {
+    const ops = [...foreignOps(), ...finalOps()];
+    return [...ops.filter((o) => o.op === "reorder"), ...ops.filter((o) => o.op !== "reorder")];
+  }
 
   // ---------- UI scaffolding ----------
   const bar = el("div", { id: "loupe-bar" });
@@ -14,7 +61,7 @@
   const saveBtn = el("button", { class: "loupe-btn", disabled: "", title: "Write edits to the working copy and rebuild" }, boot.canBuild ? "Save & rebuild" : "Save");
   const proposeBtn = el("button", { class: "loupe-btn loupe-primary", disabled: "", title: "Turn edits into a pull request" }, "Propose…");
   const discardBtn = el("button", { class: "loupe-btn", disabled: "" }, "Discard");
-  const diffBtn = el("button", { class: "loupe-btn" }, "Changes");
+  const diffBtn = el("button", { class: "loupe-btn", title: "Pending edits across the site, and what is already saved" }, "Changes");
   const fields = boot.fields || [];
   const fieldsBtn = el("button", { class: "loupe-btn", title: "Content that is not shown on any page" }, `Fields (${fields.length})`);
   bar.append(el("span", { id: "loupe-logo" }, "Loupe"), toggle, count, ...(fields.length ? [fieldsBtn] : []), saveBtn, ...(boot.canPropose ? [proposeBtn] : []), discardBtn, diffBtn);
@@ -29,7 +76,12 @@
   document.body.append(bar, panel, tools);
 
   toggle.onclick = () => setEditing(!editing);
-  discardBtn.onclick = () => location.reload();
+  discardBtn.onclick = () => {
+    const other = foreignOps().length;
+    if (other && !confirm(`Discard all ${pending.size + other} pending edits, including ${other} on other pages?`)) return;
+    clearSession();
+    location.reload();
+  };
   saveBtn.onclick = save;
   proposeBtn.onclick = proposeDialog;
   diffBtn.onclick = showDiff;
@@ -59,9 +111,13 @@
       closePanel();
     }
   }
+  let restoring = false;
   function refresh() {
-    const n = pending.size;
-    count.textContent = `${n} change${n === 1 ? "" : "s"}`;
+    if (!restoring) persist();
+    const here = pending.size;
+    const other = foreignOps().length;
+    const n = here + other;
+    count.textContent = `${n} change${n === 1 ? "" : "s"}${other ? ` (${other} on other pages)` : ""}`;
     saveBtn.disabled = discardBtn.disabled = proposeBtn.disabled = n === 0;
   }
   // A duplicated item carries the same refs as its source, so edits inside
@@ -129,29 +185,151 @@
   document.addEventListener(
     "click",
     (e) => {
-      if (!editing || bar.contains(e.target) || panel.contains(e.target) || tools.contains(e.target)) return;
+      if (!editing || bar.contains(e.target) || panel.contains(e.target) || tools.contains(e.target) || e.target.closest(".loupe-menu")) return;
       if (e.target.isContentEditable) return;
+      closeMenu();
+      if (e.altKey) return; // Alt+click follows a link even when its text is editable
       const rich = e.target.closest("[data-edit-rich]");
       const plain = e.target.closest("[data-edit]");
       const img = e.target.closest("img[data-edit-attr-src]");
       const blocked = e.target.closest("[data-edit-partial], [data-edit-ambiguous]");
       const hit = pick(e.target, [rich, plain, img]);
-      if (hit || blocked || e.target.closest("a, button")) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      // Plain links still navigate: edits are kept in the session across pages.
+      if (!hit && !blocked) return;
+      e.preventDefault();
+      e.stopPropagation();
       if (img && hit === img) return editImage(img);
       if (hit && hit === rich) return editText(rich, rich.getAttribute("data-edit-rich"), true);
       if (hit && hit === plain) return editText(plain, plain.getAttribute("data-edit"), false);
-      if (blocked) return flash(blocked, blocked.hasAttribute("data-edit-ambiguous") ? "This text has several possible sources; not editable yet." : "Several values share this text node; not editable yet.");
+      if (blocked) return flash(blocked, blocked.hasAttribute("data-edit-ambiguous") ? "This text has several possible sources. Right-click to pick one." : "Several values share this text node; not editable yet.");
     },
     true,
   );
+  // Right-click: correct the matcher. Pins and ignores are stored in
+  // .loupe.json in the project and applied on every future match.
+  let menu = null;
+  function closeMenu() {
+    if (menu) menu.remove();
+    menu = null;
+  }
+  document.addEventListener("contextmenu", (e) => {
+    if (!editing || e.shiftKey || bar.contains(e.target) || panel.contains(e.target)) return;
+    const target = e.target.nodeType === 1 ? e.target : e.target.parentElement;
+    if (!target || target.closest("#loupe-bar, #loupe-panel, #loupe-item-tools")) return;
+    e.preventDefault();
+    closeMenu();
+    const bound = target.closest("[data-edit], [data-edit-rich], img[data-edit-attr-src]");
+    const ref = bound && (bound.getAttribute("data-edit") || bound.getAttribute("data-edit-rich") || bound.getAttribute("data-edit-attr-src"));
+    const pinned = bound && bound.getAttribute("data-edit-tier") === "pinned";
+    const subject = bound || target;
+    const items = [];
+    if (bound) items.push(["Edit", () => (bound.tagName === "IMG" ? editImage(bound) : editText(bound, ref, bound.hasAttribute("data-edit-rich")))]);
+    items.push([bound ? "Change source…" : "Bind to a value…", () => pickSource(subject)]);
+    if (pinned) items.push(["Unpin (let the matcher decide)", () => unpin(subject, ref)]);
+    items.push(["Not content here (ignore this element on this page)", () => override("ignore", { page, selector: selectorFor(subject) }, `Ignored ${selectorFor(subject)} on ${page}`)]);
+    if (ref) items.push(["Never edit this value (ignore it everywhere)", () => override("ignore", { ref }, `Ignored ${labelFor(ref)} everywhere`)]);
+    menu = el("div", { class: "loupe-menu" });
+    if (ref) menu.append(el("div", { class: "loupe-menu-head" }, labelFor(ref) + (pinned ? " (pinned)" : "")));
+    for (const [label, fn] of items) {
+      const b = el("button", {}, label);
+      b.onclick = () => {
+        closeMenu();
+        fn();
+      };
+      menu.append(b);
+    }
+    document.body.append(menu);
+    const w = menu.offsetWidth, h = menu.offsetHeight;
+    menu.style.left = `${Math.min(e.clientX, window.innerWidth - w - 8) + window.scrollX}px`;
+    menu.style.top = `${Math.min(e.clientY, window.innerHeight - h - 8) + window.scrollY}px`;
+    subject.classList.add("loupe-target");
+    const done = () => subject.classList.remove("loupe-target");
+    menu.addEventListener("click", done);
+    document.addEventListener("click", done, { once: true });
+  });
+  document.addEventListener("keydown", (e) => e.key === "Escape" && closeMenu());
+  // A selector that survives a rebuild: nearest id, then tag:nth-of-type steps.
+  function selectorFor(node) {
+    const parts = [];
+    for (let n = node; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) {
+      if (n.id && !/\d{3,}/.test(n.id)) {
+        parts.unshift(`#${cssEscape(n.id)}`);
+        return parts.join(" > ");
+      }
+      const tag = n.tagName.toLowerCase();
+      const same = [...n.parentElement.children].filter((c) => c.tagName === n.tagName);
+      parts.unshift(same.length > 1 ? `${tag}:nth-of-type(${same.indexOf(n) + 1})` : tag);
+    }
+    return "body > " + parts.join(" > ");
+  }
+  async function override(kind, entry, msg) {
+    const res = await fetch("/__loupe/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ add: { kind, entry } }) });
+    if (!res.ok) return alert("Could not save the override.");
+    persist();
+    sessionStorage.setItem("loupe:flash", msg || "Saved to .loupe.json");
+    location.reload();
+  }
+  async function unpin(node, ref) {
+    const o = boot.overrides || { pin: [] };
+    const sel = selectorFor(node);
+    const entry = (o.pin || []).find((p) => p.ref === ref && (p.selector === sel || node.matches(p.selector)));
+    if (!entry) return flash(node, "Could not find the pin for this element in .loupe.json.");
+    const res = await fetch("/__loupe/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ remove: { kind: "pin", entry } }) });
+    if (!res.ok) return alert("Could not remove the pin.");
+    persist();
+    location.reload();
+  }
+  // Pick which content value an element should be bound to.
+  async function pickSource(node) {
+    const selector = selectorFor(node);
+    const isImg = node.tagName === "IMG";
+    const search = el("input", { class: "loupe-input", type: "search", placeholder: "Search values…" });
+    const scope = el("label", { class: "loupe-inline" });
+    const onlyHere = el("input", { type: "checkbox", checked: "" });
+    scope.append(onlyHere, ` only on ${page}`);
+    const list = el("div", { class: "loupe-picker" });
+    const preview = el("code", { class: "loupe-code" }, selector);
+    let leaves = [];
+    const render = (q = "") => {
+      list.replaceChildren();
+      const needle = q.trim().toLowerCase();
+      const shown = leaves.filter((l) => !needle || l.ref.toLowerCase().includes(needle) || String(l.value).toLowerCase().includes(needle)).slice(0, 60);
+      if (!shown.length) list.append(el("p", { class: "loupe-hint" }, "No values match."));
+      for (const l of shown) {
+        const row = el("button", { class: "loupe-pick" });
+        row.append(el("span", { class: "loupe-ref" }, labelFor(l.ref)), el("span", { class: "loupe-val" }, String(l.value).slice(0, 120)));
+        row.onclick = () => {
+          const entry = { ...(onlyHere.checked ? { page } : {}), selector, ref: l.ref, ...(isImg ? { attr: "src" } : {}) };
+          override("pin", entry, `Pinned ${labelFor(l.ref)} to ${selector}`);
+        };
+        list.append(row);
+      }
+    };
+    search.oninput = () => render(search.value);
+    const own = (node.textContent || node.getAttribute("alt") || "").trim().slice(0, 60);
+    openPanel("Bind this element to a value", el("p", { class: "loupe-hint" }, `The matcher will always treat ${isImg ? "this image's src" : "this element"} as the value you pick. Stored in .loupe.json and included in proposals.`), el("label", {}, "Element"), preview, scope, search, list);
+    search.value = own;
+    try {
+      leaves = await (await fetch("/__loupe/leaves")).json();
+    } catch {
+      leaves = Object.entries(values).map(([ref, value]) => ({ ref, value }));
+    }
+    render(own);
+    search.focus();
+    search.select();
+  }
   // Deepest annotated ancestor wins.
   function pick(target, candidates) {
     let best = null;
     for (const c of candidates) if (c && (!best || best.contains(c))) best = c;
     return best;
+  }
+  // A toast above the toolbar for messages that are not about one element.
+  function notice(msg) {
+    const n = el("div", { class: "loupe-notice" }, msg);
+    document.body.append(n);
+    setTimeout(() => n.classList.add("loupe-notice-out"), 3800);
+    setTimeout(() => n.remove(), 4300);
   }
   function flash(node, msg) {
     const tip = el("div", { class: "loupe-tip" }, msg);
@@ -353,7 +531,7 @@
   // ---------- lists ----------
   function listFor(item) {
     const c = item.parentElement?.closest("[data-edit-list]");
-    if (!c || c.hasAttribute("data-edit-list-partial")) return null;
+    if (!c || c.hasAttribute("data-edit-list-partial") || c.hasAttribute("data-edit-list-readonly")) return null;
     if (!listState.has(c)) {
       const key = c.getAttribute("data-edit-list");
       const entries = new WeakMap();
@@ -492,11 +670,13 @@
   async function save() {
     saveBtn.disabled = true;
     saveBtn.textContent = boot.canBuild ? "Saving & rebuilding…" : "Saving…";
-    const ops = finalOps();
+    const ops = allOps();
     try {
       const res = await fetch("/__loupe/patch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ops }) });
       const out = await res.json();
       if (!res.ok) throw new Error(out.error || out.build?.output || "save failed");
+      clearSession();
+      sessionStorage.setItem("loupe:flash", `Saved ${ops.length} change${ops.length === 1 ? "" : "s"} to ${out.changed.join(", ") || "nothing"}${out.build?.ms ? `; rebuilt in ${(out.build.ms / 1000).toFixed(1)}s` : ""}.`);
       location.reload();
     } catch (e) {
       saveBtn.textContent = boot.canBuild ? "Save & rebuild" : "Save";
@@ -507,7 +687,7 @@
   // Human-readable label for a ref: "bucket_list › 2 › venue".
   function labelFor(ref) {
     const [file, p = ""] = ref.split("#");
-    const name = file.split("/").pop().replace(/\.(json|ya?ml|toml|md|markdown)$/i, "");
+    const name = file.split("/").pop().replace(/\.(json|ya?ml|toml|md|markdown|m?[jt]s|cjs)$/i, "");
     const parts = p.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
     return [name, ...parts].join(" › ");
   }
@@ -531,7 +711,7 @@
         const st = [...listState.values()].find((s) => s.key === op.ref);
         li.append(el("span", { class: "loupe-ins" }, `list ${summarizeOrder(op.order, st ? JSON.parse(st.initial) : [])}`));
       } else {
-        const old = values[op.ref];
+        const old = oldValueOf(op.ref);
         const trunc = (s) => (s.length > 160 ? s.slice(0, 157) + "…" : s);
         if (old !== undefined && String(old) !== "") li.append(el("del", { class: "loupe-del" }, trunc(String(old))));
         li.append(el("ins", { class: "loupe-ins" }, trunc(String(op.value)) || "(empty)"));
@@ -546,16 +726,17 @@
     return `${verb} ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` and ${names.length - 3} more` : ""}`;
   }
   function proposeDialog() {
-    const ops = finalOps();
+    const ops = allOps();
+    const pages = Object.keys(session.pages);
     const title = el("input", { class: "loupe-input", type: "text", placeholder: "What changed?" });
     title.value = autoTitle(ops);
     const note = el("textarea", { class: "loupe-ta loupe-ta-short", placeholder: "Optional note for whoever reviews this" });
     const go = el("button", { class: "loupe-btn loupe-primary" }, "Create proposal");
-    const status = el("p", { class: "loupe-hint" }, `A pull request against ${boot.base || "the main branch"}. Your working copy is not touched.`);
+    const status = el("p", { class: "loupe-hint" }, `A pull request against ${boot.base || "the main branch"}. Your working copy is not touched.${pages.length > 1 ? ` Includes edits from ${pages.length} pages.` : ""}${boot.canBuild && boot.mode !== "client" ? " The proposed commit is built and checked before it is pushed." : ""}`);
     go.onclick = async () => {
       if (!title.value.trim()) return title.focus();
       go.disabled = true;
-      go.textContent = "Creating…";
+      go.textContent = boot.canBuild && boot.mode !== "client" ? "Building & checking…" : "Creating…";
       try {
         const res = await fetch("/__loupe/propose", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ops, title: title.value, note: note.value }) });
         const out = await res.json();
@@ -575,6 +756,22 @@
   }
   function showProposal(out) {
     const children = [];
+    const v = out.verification;
+    if (v) {
+      if (!v.build.ok) {
+        children.push(el("p", { class: "loupe-hint loupe-error" }, "The build failed on the proposed commit, so the branch was not pushed. It is kept locally for inspection."), el("pre", { class: "loupe-pre" }, v.build.output.slice(-2000)));
+      } else {
+        const ok = v.rendered === v.of;
+        children.push(el("p", { class: ok ? "loupe-hint loupe-ok" : "loupe-hint loupe-warn" }, `Verified: build passed in ${(v.build.ms / 1000).toFixed(1)}s (${v.pages} pages); ${v.rendered}/${v.of} edits render on the site.`));
+        const ul = el("ul", { class: "loupe-verify" });
+        for (const e of v.edits) {
+          const li = el("li", { class: e.applied && e.pages.length ? "" : "loupe-warn" });
+          li.append(el("span", { class: "loupe-ref" }, labelFor(e.ref)), " ", e.applied ? (e.pages.length ? e.pages.join(", ") : "not rendered on any page (field)") : "value not applied");
+          ul.append(li);
+        }
+        children.push(ul);
+      }
+    }
     if (out.url) {
       const a = el("a", { class: "loupe-btn loupe-primary loupe-link", href: out.url, target: "_blank", rel: "noopener" }, out.prCreated ? "Open the pull request" : "Open GitHub to finish the pull request");
       children.push(a);
@@ -593,7 +790,10 @@
     openPanel("Proposal created", ...children, el("label", {}, "Diff"), pre, el("div", { class: "loupe-actions" }));
     panel.lastChild.append(done);
     pending.clear();
+    clearSession();
+    restoring = true;
     refresh();
+    restoring = false;
   }
   // ---------- fields drawer: content no page renders ----------
   function fieldWidget(f) {
@@ -676,18 +876,127 @@
     search.focus();
   }
 
+  // The basket: every pending edit across the site, then what is already saved.
+  function basket() {
+    const wrap = el("div", { class: "loupe-basket" });
+    const entries = Object.entries(session.pages).sort(([a], [b]) => (a === page ? -1 : b === page ? 1 : a.localeCompare(b)));
+    if (!entries.length) wrap.append(el("p", { class: "loupe-hint" }, "No pending edits. Click any outlined text or image to change it; edits are kept while you move between pages."));
+    for (const [p, entry] of entries) {
+      const sec = el("section", { class: "loupe-file" });
+      const h = el("h3");
+      if (p === page) h.append(`${p} `, el("span", { class: "loupe-badge" }, "this page"));
+      else h.append(el("a", { href: p, class: "loupe-link-plain", title: entry.title || p }, p));
+      sec.append(h);
+      const list = redline(entry.ops);
+      for (const [i, li] of [...list.children].entries()) {
+        const undo = el("button", { class: "loupe-btn loupe-mini", title: "Drop this edit" }, "undo");
+        undo.onclick = () => {
+          entry.ops.splice(i, 1);
+          if (!entry.ops.length) delete session.pages[p];
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          if (p === page) location.reload(); // the page re-applies what is left from the session
+          else {
+            refresh();
+            showDiff();
+          }
+        };
+        li.append(undo);
+      }
+      sec.append(list);
+      wrap.append(sec);
+    }
+    return wrap;
+  }
   async function showDiff() {
     const res = await fetch("/__loupe/diff");
     const { diff, status } = await res.json();
     const pre = el("pre", { class: "loupe-pre loupe-diff" });
-    if (!diff.trim()) pre.textContent = "No saved changes yet. Edits you make here appear after Save; the list at the bottom right counts unsaved ones.";
+    if (!diff.trim()) pre.textContent = "Nothing saved to the working copy yet.";
     for (const line of diff.split("\n")) {
       const cls = line.startsWith("+++") || line.startsWith("---") ? "loupe-d-file" : line.startsWith("+") ? "loupe-d-add" : line.startsWith("-") ? "loupe-d-del" : line.startsWith("@@") ? "loupe-d-hunk" : "";
       pre.append(el("span", { class: cls }, line + "\n"));
     }
-    openPanel("Saved changes (git diff)", el("p", { class: "loupe-hint" }, status.trim() ? `Modified: ${status.trim().split("\n").map((s) => s.slice(3)).join(", ")}` : "Working tree clean."), pre);
+    const n = pending.size + foreignOps().length;
+    openPanel(`Changes`, el("h2", { class: "loupe-h2" }, `Pending (${n})`), basket(), el("h2", { class: "loupe-h2" }, "Saved to the working copy"), el("p", { class: "loupe-hint" }, status.trim() ? `Modified: ${status.trim().split("\n").map((s) => s.slice(3)).join(", ")}` : "Working tree clean."), pre);
   }
 
+  // ---------- restore this page's edits from the session ----------
+  function nodeForRef(ref) {
+    // Inside a reordered list the stored ref points at the item's final
+    // position; map it back to the element that now sits there.
+    for (const [c, st] of listState) {
+      if (!ref.startsWith(st.key + "[")) continue;
+      const m = ref.slice(st.key.length).match(/^\[(\d+)\](.*)$/);
+      if (!m) continue;
+      const item = items(c)[Number(m[1])];
+      if (!item) return null;
+      const src = sourceIndex(item);
+      const inner = `${st.key}[${src}]${m[2]}`;
+      return item.querySelector(`[data-edit="${cssEscape(inner)}"], [data-edit-rich="${cssEscape(inner)}"], img[data-edit-attr-src="${cssEscape(inner)}"]`) || (item.matches(`[data-edit="${cssEscape(inner)}"]`) ? item : null);
+    }
+    return document.querySelector(`[data-edit="${cssEscape(ref)}"], [data-edit-rich="${cssEscape(ref)}"], img[data-edit-attr-src="${cssEscape(ref)}"]`);
+  }
+  function restoreReorder(op) {
+    const c = [...document.querySelectorAll(`[data-edit-list="${cssEscape(op.ref)}"]`)].find((x) => !x.hasAttribute("data-edit-list-partial") && !x.hasAttribute("data-edit-list-readonly"));
+    if (!c) return false;
+    const st = listFor(items(c)[0] || c.firstElementChild);
+    if (!st) return false;
+    const orig = new Map(items(c).map((it) => [st.entries.get(it), it]));
+    const seq = [];
+    for (const o of op.order) {
+      const i = typeof o === "object" ? (o.copyOf ?? o.blankFrom) : o;
+      const source = orig.get(i);
+      if (!source) return false;
+      if (typeof o !== "object") seq.push(source);
+      else {
+        const copy = source.cloneNode(true);
+        if ("blankFrom" in o) {
+          copy.classList.add("loupe-blank");
+          for (const t of copy.querySelectorAll("[data-edit]")) if (!t.children.length) t.textContent = "New text";
+        }
+        st.entries.set(copy, o);
+        copy.draggable = editing;
+        seq.push(copy);
+      }
+    }
+    const current = items(c);
+    const next = current[current.length - 1].nextSibling; // keep items ahead of any trailing non-item nodes
+    for (const it of current) it.remove();
+    for (const node of seq) (next ? c.insertBefore(node, next) : c.append(node));
+    commitList(c);
+    return true;
+  }
+  function restore() {
+    const own = session.pages[page];
+    if (!own || !own.ops.length) return;
+    restoring = true;
+    let orphans = 0;
+    for (const op of own.ops) if (op.op === "reorder") if (!restoreReorder(op)) setPending(op.ref, op, null), orphans++;
+    for (const op of own.ops) {
+      if (op.op !== "set") continue;
+      const node = nodeForRef(op.ref);
+      if (!node) {
+        setPending(op.ref, op, null);
+        continue;
+      }
+      if (node.tagName === "IMG") setImage(node, op.ref, String(op.value));
+      else {
+        setPending(op.ref, op, node);
+        if (!node.hasAttribute("data-edit-rich")) previewText(node, String(op.value));
+      }
+    }
+    restoring = false;
+    persist();
+    if (orphans) notice(`${orphans} list change(s) from before could not be re-applied to this page; they will still be saved.`);
+  }
+
+  window.addEventListener("loupe:rematch", () => setEditing(editing));
   setEditing(true);
+  restore();
   refresh();
+  const note = sessionStorage.getItem("loupe:flash");
+  if (note) {
+    sessionStorage.removeItem("loupe:flash");
+    notice(note);
+  }
 })();
