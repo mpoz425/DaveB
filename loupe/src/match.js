@@ -391,7 +391,10 @@ export function annotate(document, result) {
     if (b.resolved) el.setAttribute("data-edit-resolved", b.resolved);
   }
   for (const list of result.lists) {
-    if (list.container) list.container.setAttribute("data-edit-list", list.key);
+    if (list.container) {
+      list.container.setAttribute("data-edit-list", list.key);
+      if (list.coverage !== list.of) list.container.setAttribute("data-edit-list-partial", `${list.coverage}/${list.of}`);
+    }
     for (const [i, el] of list.items) if (el && el.setAttribute) el.setAttribute("data-edit-item", `${list.key}[${i}]`);
   }
 }

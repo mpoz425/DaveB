@@ -42,6 +42,27 @@ node loupe/cli.js --content content --output _site
 node loupe/cli.js --content _config.yml --content _data --content _posts --output _site
 ```
 
+## Editing in place
+
+```bash
+node loupe/serve.js --content data --output dist --build "python3 build.py --no-fetch"
+# open http://localhost:4343/
+```
+
+The dev server runs the build, then serves every page matched, annotated and
+overlaid with the editor:
+
+- Click any bound text to edit it inline (Enter commits, Esc cancels). Values
+  with line breaks or markup, and Markdown bodies, open in a side panel.
+- Hover a list item for move / duplicate / delete, or drag items to reorder.
+- Click an image to change its `src` (and `alt` if bound).
+- "Save & rebuild" writes the edits back to the content files, re-runs the
+  build and reloads. "Changes" shows the resulting `git diff`.
+
+Writes are surgical: JSON keeps its indentation, YAML is spliced by node
+range so comments and blank lines survive, Markdown front matter and body
+are rewritten separately. TOML is re-serialised (comments are lost).
+
 ## What it does
 
 1. **Loads content** and flattens it to leaf values with a path such as
@@ -113,12 +134,20 @@ What remains unbound, and why:
 - `src/match.js` — DOM indexing, matching, ambiguity resolution, list
   detection, annotation.
 
+## Layout (editor)
+
+- `serve.js` — dev server: build, match, annotate, inject overlay, apply
+  patches, expose the diff.
+- `src/patch.js` — apply `set` / `reorder` ops to JSON, YAML, TOML and
+  Markdown files with minimal diffs.
+- `src/paths.js` — `file#path` ref helpers.
+- `overlay/overlay.js`, `overlay/overlay.css` — the in-page editor.
+
 ## Next
 
-1. Editing overlay: load an annotated page in an iframe, make `data-edit`
-   elements contenteditable / droppable, and produce a JSON patch against the
-   source files.
-2. Proposals: turn a patch into a branch + pull request and render it as a
-   redline preview.
-3. Robustness: JS-rendered snapshot, date/number format probes, exclusion of
-   trivial link values (`/`, `#`) from ambiguity reporting.
+1. Proposals: turn saved edits into a branch + pull request and render the
+   diff as a redline on the page, so an editor never needs git.
+2. Editor gaps: image upload (not just URL), adding a brand-new list item
+   from a blank template, editing text nodes that mix several values.
+3. Matcher robustness: JS-rendered snapshot, date/number format probes,
+   exclusion of trivial link values (`/`, `#`) from ambiguity reporting.
