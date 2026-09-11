@@ -1,0 +1,20 @@
+{
+  "name": "David Burton site + Loupe",
+  "install": "python3 -m pip install --quiet pillow && (cd loupe && npm install) && python3 build.py",
+  "terminals": [
+    {
+      "name": "Loupe editor",
+      "command": "node loupe/serve.js --content data --output dist --build \"python3 build.py --no-fetch\" --uploads assets/photos=/photos --no-push --port 4343",
+      "description": "In-place editor: builds, matches and annotates the site, served with the Loupe overlay at http://localhost:4343/ (rebuilds on Save)."
+    },
+    {
+      "name": "Static preview",
+      "command": "python3 -m http.server -d dist 8000",
+      "description": "Plain preview of the built static site (dist/) at http://localhost:8000/."
+    }
+  ],
+  "ports": [
+    { "name": "Loupe editor", "port": 4343 },
+    { "name": "Static preview", "port": 8000 }
+  ]
+}
