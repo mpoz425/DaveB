@@ -129,7 +129,7 @@ to the `series` select and a new photos file entry in `.pages.yml`.
 
 ## Design notes
 
-- Palette: warm near-black (unexposed film), cream type, Kodak yellow accent,
+- Palette: warm charcoal (a couple of stops up from unexposed film), cream type, Kodak yellow accent,
   stage-light magenta/cyan only as glow. One cream "paper" section for the reviews.
 - Type: Archivo (variable width, used wide for the big names and narrow for
   section heads), Space Mono for film-edge markings and labels, Instrument Serif
