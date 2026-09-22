@@ -129,8 +129,12 @@ to the `series` select and a new photos file entry in `.pages.yml`.
 
 ## Design notes
 
-- Palette: warm charcoal (a couple of stops up from unexposed film), cream type, Kodak yellow accent,
-  stage-light magenta/cyan only as glow. One cream "paper" section for the reviews.
+- Palette: warm off-white (mat board) with near-black type. The film stays dark:
+  the filmstrip, photo tiles and lightbox keep the unexposed-frame palette
+  (`--dark` / `--cream` tokens). Kodak yellow is the accent: bright as a fill,
+  dropped to an ochre (`--ochre`) when used as text on light surfaces.
+  Stage-light magenta/cyan wash the hero as a soft pastel glow. One whiter,
+  ruled "paper" sheet for the reviews.
 - Type: Archivo (variable width, used wide for the big names and narrow for
   section heads), Space Mono for film-edge markings and labels, Instrument Serif
   italic for asides, Caveat for Sharpie-on-a-contact-sheet notes.
