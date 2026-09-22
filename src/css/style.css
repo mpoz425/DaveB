@@ -1,7 +1,8 @@
 /* ==========================================================================
    David Burton — home base
    Design notes:
-   - Base is the warm near-black of an unexposed frame. Type is cream, not white.
+   - Base is a warm charcoal, a stop or two up from an unexposed frame. Type is
+     cream, not white. The stage-light glows and scrims do the shading.
    - Kodak yellow is the primary accent; stage-light magenta/cyan only as glow.
    - Monospace "edge markings" (frame numbers, DX codes) run along strips.
    - One cream "paper" section breaks the dark for the five-star reviews,
@@ -10,14 +11,15 @@
    ========================================================================== */
 
 :root {
-  --bg: #0d0c0a;
-  --bg-2: #141311;
-  --bg-3: #1c1a17;
-  --ink: #f1eadb;
-  --ink-2: #b8ae9d;
-  --ink-3: #7c7568;
-  --line: rgba(241, 234, 219, 0.12);
-  --line-strong: rgba(241, 234, 219, 0.25);
+  --bg: #211e1a;
+  --bg-2: #2a2622;
+  --bg-3: #342f29;
+  --bg-deep: #14120f;
+  --ink: #f3ecdf;
+  --ink-2: #c1b7a6;
+  --ink-3: #928a7c;
+  --line: rgba(243, 236, 223, 0.14);
+  --line-strong: rgba(243, 236, 223, 0.28);
 
   --yellow: #f4c542;
   --yellow-ink: #1b1600;
@@ -230,9 +232,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: absolute; inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(60% 50% at 85% 10%, rgba(255, 79, 163, 0.22), transparent 70%),
-    radial-gradient(50% 45% at 10% 90%, rgba(63, 211, 230, 0.16), transparent 70%),
-    radial-gradient(40% 40% at 60% 100%, rgba(244, 197, 66, 0.10), transparent 70%);
+    radial-gradient(60% 50% at 85% 10%, rgba(255, 79, 163, 0.26), transparent 70%),
+    radial-gradient(50% 45% at 10% 90%, rgba(63, 211, 230, 0.20), transparent 70%),
+    radial-gradient(40% 40% at 60% 100%, rgba(244, 197, 66, 0.14), transparent 70%);
   filter: blur(20px);
 }
 .hero .wrap { position: relative; }
@@ -332,7 +334,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    -------------------------------------------------------------------------- */
 .filmstrip {
   position: relative;
-  background: #060605;
+  background: var(--bg-deep);
   border-block: 1px solid var(--line);
   overflow: hidden;
   padding: 22px 0;
@@ -341,7 +343,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   /* sprocket holes */
   content: "";
   position: absolute; left: 0; right: 0; height: 12px;
-  background-image: radial-gradient(circle at 50% 50%, transparent 0, transparent 0), linear-gradient(90deg, #1c1a17 0 14px, transparent 14px 28px);
+  background-image: radial-gradient(circle at 50% 50%, transparent 0, transparent 0), linear-gradient(90deg, var(--bg-3) 0 14px, transparent 14px 28px);
   background-size: 28px 12px;
   background-repeat: repeat-x;
   -webkit-mask: linear-gradient(90deg, #000 0 14px, transparent 14px 28px);
@@ -467,7 +469,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .roll::after {
   content: "";
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 35%, transparent 55%, rgba(6,6,5,0.92) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.22) 0%, transparent 35%, transparent 55%, rgba(20,18,15,0.9) 100%);
 }
 .roll__top {
   position: absolute; top: 14px; left: 16px; right: 16px; z-index: 2;
@@ -550,7 +552,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: #f4efe4;
   padding: 8px 8px 30px;
   border-radius: 2px;
-  box-shadow: 0 20px 40px -20px rgba(0,0,0,0.8);
+  box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
   transform: rotate(var(--r, 0deg));
   transition: transform 0.4s var(--ease);
 }
@@ -851,7 +853,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .lb {
   position: fixed; inset: 0; z-index: 1000;
   display: grid; grid-template-rows: auto 1fr auto;
-  background: rgba(6, 6, 5, 0.96);
+  background: rgba(20, 18, 15, 0.96);
   opacity: 0; pointer-events: none;
   transition: opacity 0.25s;
 }
@@ -876,7 +878,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 56px; height: 56px; border-radius: 50%;
   display: grid; place-items: center;
-  color: var(--ink); background: rgba(20,19,17,0.7);
+  color: var(--ink); background: rgba(42,38,34,0.75);
   border: 1px solid var(--line);
   transition: background 0.2s, transform 0.2s;
 }
